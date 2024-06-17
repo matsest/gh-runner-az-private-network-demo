@@ -23,7 +23,7 @@ Note that there is limited support for Azure Regions in the public beta phase. S
 2. Find your organization id by running the following script and providing the username of your GitHub organization:
 
 ```powershell
-./gh-api-prereqs.ps1 -OrganizationUsername <org-username>
+./scripts/gh-api-prereqs.ps1 -OrganizationUsername <org-username>
 
 # Output:
 {
@@ -43,7 +43,7 @@ Note that there is limited support for Azure Regions in the public beta phase. S
 **Option 1: Sandbox deployment**: Run the following deployment script to create a new resource group, a new virtual network and configure a new subnet to be set up for private networking:
 
 ```powershell
-./deploy.ps1 -GitHubDatabaseId <databaseId>
+./scripts/deploy.ps1 -GitHubDatabaseId <databaseId>
 
 # Output
 Registring GitHub.Network resource provider...
@@ -56,14 +56,14 @@ Network Settings Resource Id:
 
 :point_right: Copy the `Network Settings Resource Id` value for the next step.
 
-**Option 2: Deploy to existing vnet**: If you want to set up a new subnet in an existing virtual network you can deploy the [`main.bicep`](./main.bicep) and provide the necessary parameters by editing the `main.bicepparam` file, and then running the following command:
+**Option 2: Deploy to existing vnet**: If you want to set up a new subnet in an existing virtual network you can deploy the [`main.bicep`](./bicep/main.bicep) and provide the necessary parameters by editing the [`main.bicepparam`](./bicep/main.bicepparam) file, and then running the following command:
 
 ```powershell
 $resourceGroupName = "" # existing resource group
 
 $deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
-    -ResourceGroupName $resourceGroupName -TemplateFile 'main.bicep' `
-    -TemplateParameterFile "./main.bicepparam"
+    -ResourceGroupName $resourceGroupName -TemplateFile './bicep/main.bicep' `
+    -TemplateParameterFile "./bicep/main.bicepparam"
 
 $networkSettings = Get-AzResource -ResourceId $deploy.Outputs.networkSettingsId.value
 
