@@ -4,7 +4,7 @@ param githubDatabaseId string
 param location string
 @description('Name of the existing virtual network')
 param existingVnetName string
-@description('Address prefix for the subnet')
+@description('Address prefix for the subnet. To determine the appropriate subnet IP address range, we recommend adding a 30% buffer to the maximum job concurrency you anticipate. For instance, if your network configurations runners are set to a maximum job concurrency of 300, its recommended to utilize a subnet IP address range that can accommodate at least 390 runners.')
 param subnetPrefix string
 
 // Optional params

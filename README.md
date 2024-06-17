@@ -72,6 +72,8 @@ Write-Host $networkSettings.Tags['GitHubId']
 
 ```
 
+:warning: Note that if you are deploying into an existing vnet with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will need to whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub.
+
 :point_right: Copy the `Network Settings Resource Id` value for the next step.
 
 4. Configure the network configuration for your organization in GitHub
@@ -99,3 +101,10 @@ After completing clean-up in Azure you can also delete the resource group if you
 - [About Azure Private networking](https://docs.github.com/en/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization)
 
 - [Configuring private networking](https://docs.github.com/en/organizations/managing-organization-settings/configuring-private-networking-for-github-hosted-runners-in-your-organization)
+
+## Other options
+
+If you are considering running runners for GitHub Actions in your own Azure private networking, and this scenario does not suit you, you can also consider:
+
+- Running self-hosted runners on [Azure Container App Jobs](https://learn.microsoft.com/en-us/azure/container-apps/tutorial-ci-cd-runners-jobs?tabs=azure-powershell&pivots=container-apps-jobs-self-hosted-ci-cd-github-actions) (simple and cost-effective solution)
+- Running self-hosted runners on [whatever compute and infrastructure you like](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners) (can be a hassle..)
