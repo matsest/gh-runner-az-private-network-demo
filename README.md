@@ -2,9 +2,7 @@
 
 Learning to set up Azure Private Networking for GitHub-hosted runners. Based on [this guide](https://docs.github.com/en/organizations/managing-organization-settings/configuring-private-networking-for-github-hosted-runners-in-your-organization) with some personal preferences with regards to using PowerShell and Bicep.
 
-Why? You can use GitHub-hosted runners in an Azure VNET. This enables you to use GitHub-managed infrastructure for CI/CD while providing you with full control over the networking policies of your runners. See more details in [this blog post](https://github.blog/changelog/2023-11-01-github-hosted-runners-private-networking-with-azure-virtual-networks-public-beta/).
-
-> :warning: Azure Private Networking is currently (June 2024) in public beta and subject to change.
+Why? You can use GitHub-hosted runners in an Azure VNET. This enables you to use GitHub-managed infrastructure for CI/CD while providing you with full control over the networking policies of your runners. See more details in [the documentation](https://docs.github.com/en/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization).
 
 ## Pre-requisites
 
@@ -14,7 +12,7 @@ Why? You can use GitHub-hosted runners in an Azure VNET. This enables you to use
 - PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with Az.Resources 7.1)
 - Azure Bicep (tested with 0.28.1)
 
-Note that there is limited support for Azure Regions in the public beta phase. See supported regions [here](https://docs.github.com/en/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-supported-regions).
+Note that there is limited support for Azure Regions. See supported regions [here](https://docs.github.com/en/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-supported-regions).
 
 ## Usage
 
