@@ -7,7 +7,7 @@ Why? You can use GitHub-hosted runners in an Azure VNET. This enables you to use
 ## Pre-requisites
 
 - An Azure subscription with Contributor permissions
-- An GitHub organization with organization admin
+- An GitHub organization with [CI/CD Admin](https://github.blog/changelog/2024-09-25-introducing-ci-cd-admin-a-new-pre-defined-organization-role-for-github-actions/) (least privilege) or organization Owner
 - [GitHub CLI](https://cli.github.com/) (tested with 2.51)
 - PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with Az.Resources 7.1)
 - Azure Bicep (tested with 0.28.1)
@@ -70,7 +70,7 @@ Write-Host $networkSettings.Tags['GitHubId']
 
 ```
 
-:warning: Note that if you are deploying into an existing vnet with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will need to whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub.
+:warning: Note that if you are deploying into an existing vnet with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will need to whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub. In that case you kan simplify the outbound NSG-rules to allow traffic to 'Internet' and handle the granular filtering in firewall rules.
 
 :point_right: Copy the `Network Settings Resource Id` value for the next step.
 
@@ -84,7 +84,6 @@ You should be able to use the running by following the same steps as in:
 
 - [Controlling Access to runner groups](https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/controlling-access-to-larger-runners)
 - [Run jobs on larger runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/running-jobs-on-larger-runners)
-
 
 ## Clean-up
 
