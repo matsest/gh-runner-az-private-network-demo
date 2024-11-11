@@ -56,7 +56,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
         }
       }
       {
-        name: 'allow-outbound-to-github1'
+        name: 'allow-outbound-to-github-actions'
         properties: {
           protocol: '*'
           sourcePortRange: '*'
@@ -135,7 +135,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
         }
       }
       {
-        name: 'allow-outbound-to-github2'
+        name: 'allow-outbound-to-github'
         properties: {
           protocol: '*'
           sourcePortRange: '*'
@@ -146,9 +146,18 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
           direction: 'Outbound'
           destinationAddressPrefixes: [
             '140.82.112.0/20'
+            '140.82.112.33/32'
+            '140.82.112.34/32'
+            '140.82.113.33/32'
+            '140.82.113.34/32'
+            '140.82.114.33/32'
+            '140.82.114.34/32'
+            '140.82.121.33/32'
+            '140.82.121.34/32'
             '143.55.64.0/20'
             '185.199.108.0/22'
             '192.30.252.0/22'
+            '192.30.255.164/31'
             '20.175.192.146/32'
             '20.175.192.147/32'
             '20.175.192.149/32'
@@ -177,6 +186,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
             '20.207.73.85/32'
             '20.207.73.86/32'
             '20.207.73.88/32'
+            '20.217.135.1/32'
             '20.233.83.145/32'
             '20.233.83.146/32'
             '20.233.83.147/32'
@@ -187,7 +197,9 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
             '20.248.137.50/32'
             '20.248.137.52/32'
             '20.248.137.55/32'
+            '20.26.156.215/32'
             '20.26.156.216/32'
+            '20.26.156.211/32'
             '20.27.177.113/32'
             '20.27.177.114/32'
             '20.27.177.116/32'
@@ -208,6 +220,8 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
             '4.208.26.198/32'
             '4.208.26.199/32'
             '4.208.26.200/32'
+            '4.225.11.196/32'
+            '4.237.22.32/32'
           ]
         }
       }
