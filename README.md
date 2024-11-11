@@ -57,7 +57,7 @@ Network Settings Resource Id:
 **Option 2: Deploy to existing vnet**: If you want to set up a new subnet in an existing virtual network you can deploy the [`main.bicep`](./bicep/main.bicep) and provide the necessary parameters by editing the [`main.bicepparam`](./bicep/main.bicepparam) file, and then running the following command:
 
 ```powershell
-$resourceGroupName = "" # existing resource group
+$resourceGroupName = "<existing resource group name>"
 
 $deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
     -ResourceGroupName $resourceGroupName -TemplateFile './bicep/main.bicep' `
@@ -80,7 +80,7 @@ See steps [here](https://docs.github.com/en/organizations/managing-organization-
 
 5. Use the new privately networked GitHub-hosted runner!
 
-You should be able to use the running by following the same steps as in:
+You should be able to use the runner by following the same steps as in:
 
 - [Controlling Access to runner groups](https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/controlling-access-to-larger-runners)
 - [Run jobs on larger runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/running-jobs-on-larger-runners)
