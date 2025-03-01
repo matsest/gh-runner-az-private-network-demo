@@ -146,18 +146,9 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
           direction: 'Outbound'
           destinationAddressPrefixes: [
             '140.82.112.0/20'
-            '140.82.112.33/32'
-            '140.82.112.34/32'
-            '140.82.113.33/32'
-            '140.82.113.34/32'
-            '140.82.114.33/32'
-            '140.82.114.34/32'
-            '140.82.121.33/32'
-            '140.82.121.34/32'
             '143.55.64.0/20'
             '185.199.108.0/22'
             '192.30.252.0/22'
-            '192.30.255.164/31'
             '20.175.192.146/32'
             '20.175.192.147/32'
             '20.175.192.149/32'
@@ -272,6 +263,11 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = {
     networkSecurityGroup: {
       id: nsg.id
     }
+    serviceEndpoints: [
+      {
+        service: 'Microsoft.Storage'
+      }
+    ]
   }
 }
 
