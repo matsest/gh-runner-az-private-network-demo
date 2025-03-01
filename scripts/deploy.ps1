@@ -41,6 +41,7 @@ $deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
 Write-Host "✅ Deployment complete!"
 
 $networkSettings = Get-AzResource -ResourceId $deploy.Outputs.networkSettingsId.value
+$networkSettingsId = $networkSettings.Tags['GitHubId']
 
 Write-Host "Network Settings Resource Id:"
-Write-Host $networkSettings.Tags['GitHubId']
+Write-Host $networkSettingsId
