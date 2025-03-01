@@ -6,11 +6,11 @@ Why? You can use GitHub-hosted runners in an Azure VNET. This enables you to use
 
 ## Pre-requisites
 
-- An Azure subscription with Contributor permissions
-- An GitHub organization with [CI/CD Admin](https://github.blog/changelog/2024-09-25-introducing-ci-cd-admin-a-new-pre-defined-organization-role-for-github-actions/) (least privilege) or organization Owner
-- [GitHub CLI](https://cli.github.com/) (tested with 2.51)
-- PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with Az.Resources 7.1)
-- Azure Bicep (tested with 0.28.1)
+- An Azure subscription with Contributor and Network Contributor permissions (least privilege) or Owner permissions
+- An Enterprise Cloud GitHub organization with [CI/CD Admin](https://github.blog/changelog/2024-09-25-introducing-ci-cd-admin-a-new-pre-defined-organization-role-for-github-actions/) (least privilege) or organization Owner
+- [GitHub CLI](https://cli.github.com/) (tested with 2.67)
+- PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with Az.Resources 7.8.1)
+- Azure Bicep (tested with 0.33.93)
 
 Note that there is limited support for Azure Regions. See supported regions [here](https://docs.github.com/en/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-supported-regions).
 
@@ -28,7 +28,7 @@ Note that there is limited support for Azure Regions. See supported regions [her
   "data": {
     "organization": {
       "login": "<org-username>",
-      "databaseId": <id> 
+      "databaseId": <id>
     }
   }
 }
