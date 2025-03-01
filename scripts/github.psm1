@@ -17,7 +17,12 @@ query($login: String!){
 }
 ' | ConvertFrom-Json
 
-    $res.data.organization.databaseId
+    [string]$databaseId = $res.data.organization.databaseId
+    if ([string]::IsNullOrEmpty($databaseId)) {
+        Write-Error "Could not determine database id for organization '$OrganizationUsername'"
+    }
+
+    $databaseId
 }
 
 $res | ConvertFrom-Json
@@ -33,6 +38,7 @@ function New-GitHubHostedComputeNetworkingConfiguration {
         [string]$NetworkSettingsId
     )
 
+    # Required permissions: "Network configurations" organization permissions (write) (write:network_configurations)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/orgs/network-configurations?apiVersion=2022-11-28#create-a-hosted-compute-network-configuration-for-an-organization
     $res = gh api --method POST `
         -H "Accept: application/vnd.github+json" `
@@ -59,6 +65,7 @@ function New-GitHubRunnerGroup {
         [string]$Visbility = 'all'
     )
 
+    # Required permissions: "Self-hosted runners" organization permissions (write)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/self-hosted-runner-groups?apiVersion=2022-11-28#create-a-self-hosted-runner-group-for-an-organization
     $res = gh api --method POST `
         -H "Accept: application/vnd.github+json" `
@@ -90,6 +97,7 @@ function New-GitHubHostedRunner {
         [string]$Size = '2-core'
     )
 
+    # Required permissions: "Administration" organization permissions (write) ()
     # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/hosted-runners?apiVersion=2022-11-28#create-a-github-hosted-runner-for-an-organization
     $res = gh api --method POST `
         -H "Accept: application/vnd.github+json" `
