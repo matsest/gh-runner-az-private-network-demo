@@ -284,3 +284,4 @@ module networkSettings 'networkSettings.json' = {
 }
 
 output networkSettingsId string = networkSettings.outputs.id
+output subnetName string = subnet.name

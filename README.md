@@ -85,6 +85,10 @@ You should be able to use the runner by following the same steps as in:
 - [Controlling Access to runner groups](https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/controlling-access-to-larger-runners)
 - [Run jobs on larger runners](https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/running-jobs-on-larger-runners)
 
+## End-to-end deployment
+
+As of Q1 2025 it's [now possible](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/) to configure all of this programmatically!
+
 ## Clean-up
 
 See details about deleting the configuration [here](https://docs.github.com/en/organizations/managing-organization-settings/configuring-private-networking-for-github-hosted-runners-in-your-organization#deleting-a-subnet).
