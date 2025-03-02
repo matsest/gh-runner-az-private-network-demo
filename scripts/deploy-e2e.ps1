@@ -1,19 +1,28 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'NewVnet')]
 param (
-    [Parameter()]
-    [string]$Location = 'northeurope',
-    [Parameter()]
-    [string]$VnetAddressPrefix = '10.0.0.0/16',
-    [Parameter()]
-    [string]$SubnetAddressPrefix = '10.0.1.0/24',
     [Parameter(Mandatory)]
-    [string]$GitHubOrganizationUserName
+    [string]$GitHubOrganizationUserName,
+    [Parameter(ParameterSetName = 'NewVnet')]
+    [string]$Location = 'northeurope',
+    [Parameter(ParameterSetName = 'NewVnet')]
+    [string]$VnetAddressPrefix = '10.0.0.0/16',
+
+    [Parameter(ParameterSetName = 'NewVnet')]
+    [Parameter(ParameterSetName = 'ExistingVnet')]
+    [string]$SubnetAddressPrefix = '10.0.1.0/24',
+
+    [Parameter(ParameterSetName = 'NewVnet')]
+    [Parameter(ParameterSetName = 'ExistingVnet')]
+    [string]$SubnetName = 'github-runner',
+    [Parameter(ParameterSetName = 'ExistingVnet', Mandatory)]
+    [Microsoft.Azure.Commands.Network.Models.PSVirtualNetwork]$Vnet
 )
 
 $ErrorActionPreference = 'Stop'
 Import-Module "$PSScriptRoot/github.psm1" -Force
 
 Write-Host "`n Deploying GitHub-hosted runners with Azure Private Networking for organization '$GitHubOrganizationUserName'...`n"
+$GitHubDatabaseId = Get-GitHubOrganizationDatabaseId -OrganizationUsername $GitHubOrganizationUserName
 
 $Context = Get-AzContext
 Write-Host "Using Azure subscription: $($Context.Subscription.Name) in location: $Location"
@@ -22,16 +31,16 @@ Write-Host "Using Azure subscription: $($Context.Subscription.Name) in location:
 Write-Host "- Registring GitHub.Network resource provider..."
 $null = Register-AzResourceProvider -ProviderNamespace GitHub.Network
 
-# TODO: Add support for inputing a pre-existing vnet and resource group
-# Pre-reqs
-Write-Host "- Configuring resource group and virtual network..."
-$rg = New-AzResourceGroup -Name 'gh-private-runners' -Location $Location -Force
-$vnet = Get-AzVirtualNetwork -Name 'gh-private-vnet' -ResourceGroupName $rg.ResourceGroupName -ErrorAction SilentlyContinue
-if (!$vnet) {
-    $vnet = New-AzVirtualNetwork -Name 'gh-private-vnet' -ResourceGroupName $rg.ResourceGroupName -Location $Location -AddressPrefix $VnetAddressPrefix
+if ($PSCmdlet.ParameterSetName -eq 'NewVnet') {
+    Write-Host "- Configuring resource group and virtual network..."
+    $rg = New-AzResourceGroup -Name 'gh-private-runners' -Location $Location -Force
+    $Vnet = New-AzVirtualNetwork -Name 'gh-private-vnet' -ResourceGroupName $rg.ResourceGroupName -Location $Location -AddressPrefix $VnetAddressPrefix
+} else {
+    Write-Host "- Using existing virtual network: $($Vnet.Name)..."
+    $rg = Get-AzResourceGroup -Name $Vnet.ResourceGroupName
+    $Location = $Vnet.Location
 }
 
-$GitHubDatabaseId = Get-GitHubOrganizationDatabaseId -OrganizationUsername $GitHubOrganizationUserName
 $now = Get-Date -Format 'yyyy-MM-ddTHHmm'
 
 # Deploy template
@@ -41,7 +50,8 @@ $deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
     -githubDatabaseId $GitHubDatabaseId `
     -location $Location `
     -existingVnetName $vnet.Name `
-    -subnetPrefix $SubnetAddressPrefix
+    -subnetPrefix $SubnetAddressPrefix `
+    -subnetName $SubnetName
 Write-Host "    - Configured subnet: $($deploy.Outputs.subnetName.value)!"
 
 $networkSettings = Get-AzResource -ResourceId $deploy.Outputs.networkSettingsId.value
@@ -55,7 +65,7 @@ if ([string]::IsNullOrEmpty($networkSettingsId)) {
 Write-Host "- Creating GitHub hosted networking configuration..."
 $networkConfiguration = New-GitHubHostedComputeNetworkingConfiguration `
     -OrganizationUsername $GitHubOrganizationUserName `
-    -NetworkConfigurationName  $vnet.Name `
+    -Name $vnet.Name `
     -NetworkSettingsId $networkSettingsId
 Write-Host "    - Created networking configuration: $($networkConfiguration.name)!"
 
