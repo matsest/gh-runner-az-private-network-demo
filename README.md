@@ -17,6 +17,7 @@ Note that there is limited support for Azure Regions. See supported regions [her
 ## Usage
 
 1. Authenticate to GitHub CLI by running [`gh auth login`](https://cli.github.com/manual/gh_auth_login)
+    - TODO: correct token usage or scope
 
 2. Find your organization id by running the following script and providing the username of your GitHub organization:
 
@@ -109,3 +110,17 @@ If you are considering running runners for GitHub Actions in your own Azure priv
 
 - Running self-hosted runners on [Azure Container App Jobs](https://learn.microsoft.com/en-us/azure/container-apps/tutorial-ci-cd-runners-jobs?tabs=azure-powershell&pivots=container-apps-jobs-self-hosted-ci-cd-github-actions) (simple and cost-effective solution)
 - Running self-hosted runners on [whatever compute and infrastructure you like](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners) (can be a hassle..)
+
+
+## Subnet size and runner concurrency
+
+Based on [GitHub documentation](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/configuring-private-networking-for-github-hosted-runners-in-your-enterprise#prerequisites) it's recommended to add a 30% buffer to the maximum job concurrency you anticipate. This needs to be taken into account when choosing the subnet size (Azure) and the maximum count of runners (GitHub) in the setup. Note that Azure reserves [five of the IP addresses](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method) in a given subnet.
+
+| Subnet size | IP addresses | Usable IP addresses | Max recommended # of runners |
+|-------------|--------------|---------------------|------------------------------|
+| /28         | 16           | 11                  | 8                            |
+| /27         | 32           | 27                  | 20                           |
+| /26         | 64           | 59                  | 45                           |
+| /25         | 128          | 123                 | 94                           |
+| /24         | 256          | 251                 | 190                          |
+| /23         | 512          | 507                 | 390                          |
