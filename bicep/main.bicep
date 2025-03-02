@@ -9,7 +9,7 @@ param subnetPrefix string
 
 // Optional params
 @description('Name of the subnet')
-param subnetName string = 'gh-runner'
+param subnetName string = 'github-runner'
 @description('Base name for new resources')
 param baseName string = '${existingVnetName}-${subnetName}'
 @description('Name of the network security group')
@@ -18,12 +18,12 @@ param nsgName string = '${baseName}-nsg'
 param networkSettingsName string = '${baseName}-networksettings'
 
 // Existing resources
-resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' existing = {
+resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
   name: existingVnetName
 }
 
 // Resources
-resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
   name: nsgName
   location: location
   properties: {
@@ -247,7 +247,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
   }
 }
 
-resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = {
+resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
   name: subnetName
   parent: vnet
   properties: {
@@ -271,17 +271,15 @@ resource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-11-01' = {
   }
 }
 
-// Deployed as module due to unsupported resource type in Bicep
-module networkSettings 'networkSettings.json' = {
+resource networkSettings 'GitHub.Network/networkSettings@2024-04-02' = {
   name: networkSettingsName
-  params: {
-    name: networkSettingsName
-    location: location
-    subnetName: subnet.name
-    vnetName: vnet.name
-    databaseId: githubDatabaseId
+  location: location
+  properties: {
+    businessId: githubDatabaseId
+    subnetId: subnet.id
   }
 }
 
-output networkSettingsId string = networkSettings.outputs.id
+output networkSettingsResourceId string = networkSettings.id
+output networkSettingsGitHubId string = networkSettings.tags.GitHubId
 output subnetName string = subnet.name
