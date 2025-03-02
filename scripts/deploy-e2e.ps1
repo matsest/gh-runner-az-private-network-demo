@@ -29,7 +29,12 @@ Write-Host "Using Azure subscription: $($Context.Subscription.Name) in location:
 
 # MARK: Azure
 Write-Host "- Registring GitHub.Network resource provider..."
-$null = Register-AzResourceProvider -ProviderNamespace GitHub.Network
+$provider = Get-AzResourceProvider -ProviderNamespace 'GitHub.Network'
+if ($provider.RegistrationState -eq 'Registered') {
+    Write-Host "    - Provider already registered!"
+} else {
+    $null = Register-AzResourceProvider -ProviderNamespace GitHub.Network
+}
 
 if ($PSCmdlet.ParameterSetName -eq 'NewVnet') {
     Write-Host "- Configuring resource group and virtual network..."
@@ -94,7 +99,7 @@ Write-Host "    - Created runner: $($runner.name)!"
 Write-Host "`n ✅ Deployment complete!`n"
 
 Write-Host "👉 Url to hosted compute networking configuration:"
-Write-Host "https://github.com/organizations/$GitHubOrganizationUserName/settings/actions/hosted-compute/networking-configurations/$($networkConfiguration.id)"0
+Write-Host "https://github.com/organizations/$GitHubOrganizationUserName/settings/actions/hosted-compute/networking-configurations/$($networkConfiguration.id)"
 
 Write-Host "👉 Url to runner group with runner:"
 Write-Host "https://github.com/organizations/$GitHubOrganizationUserName/settings/actions/runner-groups/$($runnerGroup.id)"
@@ -108,5 +113,5 @@ jobs:
 
 "@
 
-Write-Host "🚀 Add the following to a GitHub Actions workfflow to get started:"
+Write-Host "🚀 Add the following to a GitHub Actions workflow to get started:"
 Write-Host $yaml
