@@ -209,10 +209,11 @@ function New-GitHubHostedRunner {
 
     # Required permissions: "Administration" organization permissions (write)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/hosted-runners?apiVersion=2022-11-28#create-a-github-hosted-runner-for-an-organization
+    # Question about too wide permissions required: https://github.com/orgs/community/discussions/149651#discussioncomment-12373322
     $res = ($allSettings | ConvertTo-Json) | gh api --method POST `
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
-        /orgs/$OrganizationUsername/actions/runners `
+        /orgs/$OrganizationUsername/actions/hosted-runners `
         --input -
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Failed to create runner: '$Name'`n$res"
