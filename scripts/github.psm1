@@ -48,7 +48,7 @@ function Get-GitHubHostedComputeNetworkingConfiguration {
     | ConvertFrom-Json -Depth 100
 
     if ($res.status -eq 404) {
-        Write-Warning "Could not any network configurations for organization '$OrganizationUsername'"
+        Write-Warning "Could not find any network configurations for organization '$OrganizationUsername'"
         return
     }
 
@@ -115,7 +115,7 @@ function Get-GitHubRunnerGroup {
     | ConvertFrom-Json -Depth 100
 
     if ($res.status -eq 404) {
-        Write-Warning "Could not any runner groups for organization '$OrganizationUsername'"
+        Write-Warning "Could not find any runner groups for organization '$OrganizationUsername'"
         return
     }
 
