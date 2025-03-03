@@ -5,7 +5,7 @@ Learning to set up Azure Private Networking for GitHub-hosted runners. Based on 
 Why? You can use GitHub-hosted runners in an Azure VNET. This enables you to use GitHub-managed infrastructure for CI/CD while providing you with full control over the networking policies of your runners. See more details in [the documentation](https://docs.github.com/en/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization).
 
 > [!TIP]
-> I am currently re-working this demo with support for new GitHub API's allowing for full end-to-end automated deployment. You can check out the previous (still functional!) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1).
+> I am currently re-working this demo with support for new GitHub API's allowing for full end-to-end automated deployment. You can check out the previous (still functional!) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
 
 ## Pre-requisites
 
