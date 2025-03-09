@@ -76,13 +76,18 @@ function New-GitHubOrgHostedComputeNetworkingConfiguration {
     )
 
     $defaultSettings = @{
-        name                     = $Name
-        'network_settings_ids[]' = $NetworkSettingsId
-        compute_service          = 'actions'
+        name                   = $Name
+        'network_settings_ids' = @($NetworkSettingsId)
+        compute_service        = 'actions'
     }
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
 
-    # TODO: check if exists already
+    # Check if networking configuration already exist
+    $existingNetworkConfig = Get-GitHubOrgHostedComputeNetworkingConfiguration -OrganizationUsername $OrganizationUsername -Name $Name -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    if ($existingNetworkConfig) {
+        Write-Warning "Networking configuration with the name '$Name' already exists."
+        return $existingNetworkConfig
+    }
 
     # Required permissions: "Network configurations" organization permissions (write) (write:network_configurations)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/orgs/network-configurations?apiVersion=2022-11-28#create-a-hosted-compute-network-configuration-for-an-organization
@@ -215,6 +220,37 @@ function Get-GitHubOrgHostedRunner {
     $res
 }
 
+function Get-GitHubOwnedImage {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [string]$OrganizationUsername,
+        [Parameter(Mandatory)]
+        [string]$Name
+    )
+
+    # Required permissions: "Administration" organization permissions (read)
+    # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/hosted-runners?apiVersion=2022-11-28#get-github-owned-images-for-github-hosted-runners-in-an-organization
+    $res = gh api --method GET `
+        -H "Accept: application/vnd.github+json" `
+        -H "X-GitHub-Api-Version: 2022-11-28" `
+        /orgs/$OrganizationUsername/actions/hosted-runners/images/github-owned `
+    | ConvertFrom-Json -Depth 100
+
+    if ($res.status -eq 404) {
+        Write-Warning "Could not find any images for organization '$OrganizationUsername'"
+        return
+    }
+
+    $image = $res.images | Where-Object { $_.display_name -match $Name }
+    if (-not $image ) {
+        Write-Warning "Could not find image with name '$Name'. Found: $($res.images.display_name -join ', ')"
+        return
+    }
+
+    $image
+}
+
 function New-GitHubOrgHostedRunner {
     [CmdletBinding()]
     param (
@@ -227,8 +263,8 @@ function New-GitHubOrgHostedRunner {
         [Parameter()]
         [int]$MaximumRunners = 10,
         [Parameter()]
-        [ValidateSet('ubuntu-latest', 'ubuntu-24.04', 'ubuntu-22.04')]
-        [string]$ImageName = 'ubuntu-24.04',
+        [ValidateSet('Ubuntu Latest', 'Ubuntu 24.04', 'Ubuntu 22.04')]
+        [string]$ImageName = 'Ubuntu 24.04',
         [Parameter()]
         [ValidateSet('2-core', '4-core', '8-core', '16-core', '32-core')]
         [string]$Size = '2-core',
@@ -243,13 +279,14 @@ function New-GitHubOrgHostedRunner {
 
     # Required settings
     $defaultSettings = @{
-        name             = $Name
-        runner_group_id  = $RunnerGroupId
-        maximum_runners  = $MaximumRunners
-        "image[id]"      = $ImageName
-        "image[source]"  = "github"
-        "image[version]" = "latest"
-        size             = $Size
+        name            = $Name
+        runner_group_id = $RunnerGroupId
+        maximum_runners = $MaximumRunners
+        size            = $Size
+        image           = @{
+            id     = $image.id
+            source = $image.source
+        }
     }
     # All settings
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
@@ -258,7 +295,7 @@ function New-GitHubOrgHostedRunner {
     $existingRunner = Get-GitHubOrgHostedRunner -OrganizationUsername $OrganizationUsername -Name $Name -RunnerGroupId $RunnerGroupId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
     if ($existingRunner) {
         Write-Warning "Runner with the name '$Name' in runner group already exists."
-        return $existingRunnerGroup
+        return $existingRunner
     }
 
     # Required permissions: "Administration" organization permissions (write)
