@@ -22,7 +22,7 @@ $ErrorActionPreference = 'Stop'
 Import-Module "$PSScriptRoot/../pwsh/github.psm1" -Force
 
 Write-Host "`n Deploying GitHub-hosted runners with Azure Private Networking for organization '$GitHubOrganizationUserName'...`n"
-$GitHubDatabaseId = Get-GitHubOrganizationDatabaseId -OrganizationUsername $GitHubOrganizationUserName
+$GitHubDatabaseId = Get-GitHubOrgDatabaseId -OrganizationUsername $GitHubOrganizationUserName
 
 $Context = Get-AzContext
 Write-Host "Using Azure subscription: $($Context.Subscription.Name) in location: $Location"
@@ -68,7 +68,7 @@ if ([string]::IsNullOrEmpty($networkSettingsId)) {
 # MARK: GitHub
 # Create hosted compute networking configuration
 Write-Host "- Creating GitHub hosted networking configuration..."
-$networkConfiguration = New-GitHubHostedComputeNetworkingConfiguration `
+$networkConfiguration = New-GitHubOrgHostedComputeNetworkingConfiguration `
     -OrganizationUsername $GitHubOrganizationUserName `
     -Name $vnet.Name `
     -NetworkSettingsId $networkSettingsId
@@ -76,7 +76,7 @@ Write-Host "    - Created networking configuration: $($networkConfiguration.name
 
 # Create runner group
 Write-Host "- Creating GitHub runner group..."
-$runnerGroup = New-GitHubRunnerGroup `
+$runnerGroup = New-GitHubOrgRunnerGroup `
     -OrganizationUsername $GitHubOrganizationUserName `
     -Name $vnet.Name `
     -NetworkConfigurationId $networkConfiguration.id `
@@ -86,7 +86,7 @@ Write-Host "    - Created runner group: $($runnerGroup.name)!"
 # Create runner
 Write-Host "- Creating GitHub runner..."
 $runnerType = "ubuntu-24.04"
-$runner = New-GitHubHostedRunner `
+$runner = New-GitHubOrgHostedRunner `
     -OrganizationUsername $GitHubOrganizationUserName `
     -Name "$($vnet.Name)-$runnerType" `
     -RunnerGroupId $runnerGroup.id `

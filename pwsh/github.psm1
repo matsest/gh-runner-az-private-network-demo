@@ -2,7 +2,7 @@
 $env:GH_PROMPT_DISABLED = "true"
 $env:GH_PAGER = ""
 
-function Get-GitHubOrganizationDatabaseId {
+function Get-GitHubOrgDatabaseId {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -29,7 +29,7 @@ query($login: String!){
     $databaseId
 }
 
-function Get-GitHubHostedComputeNetworkingConfiguration {
+function Get-GitHubOrgHostedComputeNetworkingConfiguration {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -61,7 +61,7 @@ function Get-GitHubHostedComputeNetworkingConfiguration {
     $networkConfig
 }
 
-function New-GitHubHostedComputeNetworkingConfiguration {
+function New-GitHubOrgHostedComputeNetworkingConfiguration {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -81,6 +81,8 @@ function New-GitHubHostedComputeNetworkingConfiguration {
     }
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
 
+    # TODO: check if exists already
+
     # Required permissions: "Network configurations" organization permissions (write) (write:network_configurations)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/orgs/network-configurations?apiVersion=2022-11-28#create-a-hosted-compute-network-configuration-for-an-organization
     $res = ($allSettings | ConvertTo-Json) | gh api --method POST `
@@ -96,7 +98,7 @@ function New-GitHubHostedComputeNetworkingConfiguration {
     $res | ConvertFrom-Json
 }
 
-function Get-GitHubRunnerGroup {
+function Get-GitHubOrgRunnerGroup {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -128,7 +130,7 @@ function Get-GitHubRunnerGroup {
     $runnerGroup
 }
 
-function New-GitHubRunnerGroup {
+function New-GitHubOrgRunnerGroup {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -156,6 +158,13 @@ function New-GitHubRunnerGroup {
     # All settings
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
 
+    # Check if runner group already exist
+    $existingRunnerGroup = Get-GitHubOrgRunnerGroup -OrganizationUsername $OrganizationUsername -Name $Name -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    if ($existingRunnerGroup) {
+        Write-Warning "Runner group with the name '$Name' already exists."
+        return $existingRunnerGroup
+    }
+
     # Required permissions: "Self-hosted runners" organization permissions (write)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/self-hosted-runner-groups?apiVersion=2022-11-28#create-a-self-hosted-runner-group-for-an-organization
     $res = $($allSettings | ConvertTo-Json ) | gh api --method POST `
@@ -173,7 +182,40 @@ function New-GitHubRunnerGroup {
     $res | ConvertFrom-Json
 }
 
-function New-GitHubHostedRunner {
+function Get-GitHubOrgHostedRunner {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [string]$OrganizationUsername,
+        [Parameter(Mandatory)]
+        [string]$Name,
+        [Parameter(Mandatory)]
+        [string]$RunnerGroupId
+    )
+
+    # Required permissions: "Administration" organization permissions (read)
+    # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/hosted-runners?apiVersion=2022-11-28#get-a-github-hosted-runner-for-an-organization
+    $res = gh api --method GET `
+        -H "Accept: application/vnd.github+json" `
+        -H "X-GitHub-Api-Version: 2022-11-28" `
+        /orgs/$OrganizationUsername/actions/hosted-runners `
+    | ConvertFrom-Json -Depth 100
+
+    if ($res.status -eq 404) {
+        Write-Warning "Could not find any GitHub-hosted runners for organization '$OrganizationUsername'"
+        return
+    }
+
+    $runner = $res.runners | Where-Object { $_.name -eq $Name -and $_.runner_group_id -eq $RunnerGroupId }
+    if (-not $runner) {
+        Write-Warning "Could not find GitHub-hosted runner with the name '$Name' in runner group with id '$RunnerGroupId'."
+        return
+    }
+
+    $res | ConvertFrom-Json
+}
+
+function New-GitHubOrgHostedRunner {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
@@ -206,6 +248,13 @@ function New-GitHubHostedRunner {
     }
     # All settings
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
+
+    # Check if runner already exist
+    $existingRunner = Get-GitHubOrgHostedRunner -OrganizationUsername $OrganizationUsername -Name $Name -RunnerGroupId $RunnerGroupId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    if ($existingRunner) {
+        Write-Warning "Runner with the name '$Name' in runner group already exists."
+        return $existingRunnerGroup
+    }
 
     # Required permissions: "Administration" organization permissions (write)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/hosted-runners?apiVersion=2022-11-28#create-a-github-hosted-runner-for-an-organization
