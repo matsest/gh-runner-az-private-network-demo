@@ -29,6 +29,7 @@ query($login: String!){
     $databaseId
 }
 
+# MARK: Hosted compute networking configuration
 function Get-GitHubOrgHostedComputeNetworkingConfiguration {
     [CmdletBinding()]
     param (
@@ -98,6 +99,7 @@ function New-GitHubOrgHostedComputeNetworkingConfiguration {
     $res | ConvertFrom-Json
 }
 
+# MARK: Runner group
 function Get-GitHubOrgRunnerGroup {
     [CmdletBinding()]
     param (
@@ -182,6 +184,7 @@ function New-GitHubOrgRunnerGroup {
     $res | ConvertFrom-Json
 }
 
+# MARK: Runner
 function Get-GitHubOrgHostedRunner {
     [CmdletBinding()]
     param (
@@ -273,6 +276,7 @@ function New-GitHubOrgHostedRunner {
     $res | ConvertFrom-Json
 }
 
+# MARK: Support functions
 function Merge-HashTable {
     param(
         [hashtable] $Default,
@@ -305,6 +309,7 @@ function Convert-SubnetSizeToRunnersCount {
         return
     }
 
+    # Calculate the number of available IPs based on CIDR Prefix
     $numberOfIps = [math]::Pow(2, 32 - $prefixLength)
     # Azure reserves 5 IP addresses within each subnet
     $usableIps = $numberOfIps - 5
