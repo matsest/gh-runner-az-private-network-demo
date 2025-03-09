@@ -38,7 +38,7 @@ Set-AzContext -Subscription <subscription name or id>
 **Option 1: Sandbox deployment**: Run the following script to create a new resource group, a new virtual network and configure a new subnet:
 
 ```powershell
-./scripts/deploy.ps1 -GitHubOrgUserName <github org name>
+./deploy.ps1 -GitHubOrgUserName <github org name>
 ```
 
 **Option 2: Deploy to existing vnet**: Run the following  script to create a new subnet in an existing virtual network and resource group:
@@ -46,7 +46,7 @@ Set-AzContext -Subscription <subscription name or id>
 ```powershell
 $vnet = Get-AzVirtualNetwork -ResourceGroupName -Name <name>
 
-./scripts/deploy.ps1 -GitHubOrgUserName <github org name> `
+./deploy.ps1 -GitHubOrgUserName <github org name> `
     -SubnetAddressPrefix <address prefix> `
     -SubnetName <subnet name>
 ```
@@ -182,7 +182,7 @@ Examples:
 
 Based on [GitHub documentation](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/configuring-private-networking-for-github-hosted-runners-in-your-enterprise#prerequisites) it's recommended to add a 30% buffer to the maximum job concurrency you anticipate. This needs to be taken into account when choosing the subnet size (Azure) and the maximum count of runners (GitHub) in the setup. Note that Azure reserves [five of the IP addresses](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method) in a given subnet.
 
-The relationship between a subnet address prefix and maximum number of runners it can hold can be calucalted with the `Convert-SubnetSizeToRunnersCount` function which is used in the script to automatically resolve the count of runners to allow for.
+The relationship between a subnet address prefix and maximum number of runners it can hold can be calculated with the [`Convert-SubnetSizeToRunnersCount`](https://github.com/matsest/gh-runner-az-private-network-demo/blob/4134c5a6392f034d1662505f577723c01529c354/pwsh/github.psm1#L343) function which is used in the script to automatically resolve the count of runners to allow for.
 
 ```powershell
 Convert-SubnetSizeToRunnersCount "10.0.0.0/24" -Verbose

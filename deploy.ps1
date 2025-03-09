@@ -19,7 +19,7 @@ param (
 )
 
 $startTime = Get-Date
-Import-Module "$PSScriptRoot/../pwsh/github.psm1" -Force
+Import-Module "$PSScriptRoot/pwsh/github.psm1" -Force
 $ErrorActionPreference = 'Stop'
 
 # MARK: Validation
