@@ -1,7 +1,7 @@
 [CmdletBinding(DefaultParameterSetName = 'NewVnet')]
 param (
     [Parameter(Mandatory)]
-    [string]$GitHubOrganizationUserName,
+    [string]$GitHubOrgUserName,
     [Parameter(ParameterSetName = 'NewVnet')]
     [string]$Location = 'northeurope',
     [Parameter(ParameterSetName = 'NewVnet')]
@@ -20,6 +20,20 @@ param (
 
 $ErrorActionPreference = 'Stop'
 Import-Module "$PSScriptRoot/../pwsh/github.psm1" -Force
+
+# Validate GitHub permissions
+$scopes = gh api -i user | Select-String "X-Oauth-Scopes: " -Raw
+if (-not $scopes -match "admin:org") {
+    Write-Error "You need to have 'admin:org' scope to run this script"
+}
+
+# Validate Azure permissions
+$me = Get-AzAdUser -SignedIn
+[array]$roleAssignments = Get-AzRoleAssignment -ObjectId $me.Id
+[array]$roles = $roleAssignments.RoleDefinitionName
+if (-not($roles -contains 'Owner' -or ($roles -contains 'Contributor' -and $roles -contains 'Network Contributor'))) {
+    Write-Error "You need to have 'Owner' role to run this script"
+}
 
 # Validate max runner count
 $maxRunnerCount = Convert-SubnetSizeToRunnersCount  -SubnetAddressPrefix $SubnetAddressPrefix
