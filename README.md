@@ -53,6 +53,7 @@ Set-AzContext -Subscription <subscription name or id>
 $vnet = Get-AzVirtualNetwork -ResourceGroupName -Name <name>
 
 ./deploy.ps1 -GitHubOrgUserName <github org name> `
+    -Vnet $vnet `
     -SubnetAddressPrefix <address prefix> `
     -SubnetName <subnet name>
 ```
