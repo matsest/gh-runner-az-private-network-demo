@@ -80,7 +80,7 @@ $runnerGroup = New-GitHubOrgRunnerGroup `
     -OrganizationUsername $GitHubOrganizationUserName `
     -Name $vnet.Name `
     -NetworkConfigurationId $networkConfiguration.id `
-    -Visibility 'all'
+    -Visibility 'private'
 Write-Host "    - Created runner group: $($runnerGroup.name)!"
 
 # Create runner

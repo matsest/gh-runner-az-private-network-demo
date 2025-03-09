@@ -141,7 +141,7 @@ function New-GitHubOrgRunnerGroup {
         [string]$NetworkConfigurationId = $null,
         [Parameter()]
         [ValidateSet('all', 'selected', 'private')]
-        [string]$Visibility = 'all',
+        [string]$Visibility = 'private',
         [Parameter()]
         [hashtable]$AdditionalSettings = @{}
     )
