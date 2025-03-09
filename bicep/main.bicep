@@ -16,6 +16,8 @@ param baseName string = '${existingVnetName}-${subnetName}'
 param nsgName string = '${baseName}-nsg'
 @description('Name of the network settings')
 param networkSettingsName string = '${baseName}-networksettings'
+@description('Custom network security group rules to be used for additional outbound openings. Start on priority 300')
+param customNsgRules array = []
 
 // Existing resources
 resource vnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
@@ -27,7 +29,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
   name: nsgName
   location: location
   properties: {
-    securityRules: [
+    securityRules: union([
       {
         name: 'deny-inbound-all'
         properties: {
@@ -230,20 +232,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
           destinationAddressPrefixes: []
         }
       }
-      {
-        name: 'deny-outbound-internet'
-        properties: {
-          protocol: '*'
-          sourcePortRange: '*'
-          destinationPortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: 'Internet'
-          access: 'Deny'
-          priority: 400
-          direction: 'Outbound'
-        }
-      }
-    ]
+    ], customNsgRules)
   }
 }
 
