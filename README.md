@@ -134,7 +134,7 @@ VERBOSE: Maximum number of runners: 193
 193
 ```
 
-Example values for subnets:
+Example values for common subnet sizes (/28 is the smallest useful subnet):
 
 | Subnet size | IP addresses | Usable IP addresses | Max recommended # of runners |
 |-------------|--------------|---------------------|------------------------------|
@@ -142,5 +142,5 @@ Example values for subnets:
 | /27         | 32           | 27                  | 20                           |
 | /26         | 64           | 59                  | 45                           |
 | /25         | 128          | 123                 | 94                           |
-| /24         | 256          | 251                 | 190                          |
+| /24         | 256          | 251                 | 193                          |
 | /23         | 512          | 507                 | 390                          |
