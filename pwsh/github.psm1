@@ -24,6 +24,7 @@ query($login: String!){
     [string]$databaseId = $res.data.organization.databaseId
     if ([string]::IsNullOrEmpty($databaseId)) {
         Write-Error "Could not determine database id for organization '$OrganizationUsername'"
+        return
     }
 
     $databaseId
@@ -215,7 +216,7 @@ function Get-GitHubOrgHostedRunner {
         return
     }
 
-    $res | ConvertFrom-Json
+    $res
 }
 
 function New-GitHubOrgHostedRunner {
