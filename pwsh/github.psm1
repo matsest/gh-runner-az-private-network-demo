@@ -289,3 +289,30 @@ function Merge-HashTable {
     # Union both sets
     $default1 + $Update
 }
+
+function Convert-SubnetSizeToRunnersCount {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [string]$SubnetAddressPrefix
+    )
+
+    # Find the number of usable IPs
+    [int]$prefixLength = [System.Net.IPNetwork]::Parse($SubnetAddressPrefix).PrefixLength
+
+    if ($prefixLength -gt 28) {
+        Write-Error "Number of available IPs is too small. Choose a larger subnet (min. /28). "
+        return
+    }
+
+    $numberOfIps = [math]::Pow(2, 32 - $prefixLength)
+    # Azure reserves 5 IP addresses within each subnet
+    $usableIps = $numberOfIps - 5
+    Write-Verbose "Number of usable IPs: $usableIps"
+
+    # We need to have a 30% buffer for the number of runners
+    $buffer = 0.3
+    $maxRunnersCount = [math]::Floor($usableIps / (1 + $buffer))
+    Write-Verbose "Maximum number of runners: $maxRunnersCount"
+    $maxRunnersCount
+}

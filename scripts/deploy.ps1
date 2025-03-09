@@ -9,7 +9,7 @@ param (
 
     [Parameter(ParameterSetName = 'NewVnet')]
     [Parameter(ParameterSetName = 'ExistingVnet')]
-    [string]$SubnetAddressPrefix = '10.0.1.0/24',
+    [string]$SubnetAddressPrefix = '10.0.1.0/27',
 
     [Parameter(ParameterSetName = 'NewVnet')]
     [Parameter(ParameterSetName = 'ExistingVnet')]
@@ -20,6 +20,9 @@ param (
 
 $ErrorActionPreference = 'Stop'
 Import-Module "$PSScriptRoot/../pwsh/github.psm1" -Force
+
+# Validate max runner count
+$maxRunnerCount = Convert-SubnetSizeToRunnersCount  -SubnetAddressPrefix $SubnetAddressPrefix
 
 Write-Host "`n Deploying GitHub-hosted runners with Azure Private Networking for organization '$GitHubOrganizationUserName'...`n"
 $GitHubDatabaseId = Get-GitHubOrgDatabaseId -OrganizationUsername $GitHubOrganizationUserName
@@ -90,7 +93,7 @@ $runner = New-GitHubOrgHostedRunner `
     -OrganizationUsername $GitHubOrganizationUserName `
     -Name "$($vnet.Name)-$runnerType" `
     -RunnerGroupId $runnerGroup.id `
-    -MaximumRunners 10 `
+    -MaximumRunners $maxRunnerCount `
     -ImageName $runnerType `
     -Size '2-core'
 Write-Host "    - Created runner: $($runner.name)!"

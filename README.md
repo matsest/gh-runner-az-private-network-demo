@@ -119,6 +119,23 @@ If you are considering running runners for GitHub Actions in your own Azure priv
 
 Based on [GitHub documentation](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/configuring-private-networking-for-github-hosted-runners-in-your-enterprise#prerequisites) it's recommended to add a 30% buffer to the maximum job concurrency you anticipate. This needs to be taken into account when choosing the subnet size (Azure) and the maximum count of runners (GitHub) in the setup. Note that Azure reserves [five of the IP addresses](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/private-ip-addresses#allocation-method) in a given subnet.
 
+The relationship between a subnet address prefix and maximum number of runners it can hold can be calucalted with the `Convert-SubnetSizeToRunnersCount` function which is used in the script to automatically resolve the count of runners to allow for.
+
+```powershell
+Convert-SubnetSizeToRunnersCount "10.0.0.0/24" -Verbose
+VERBOSE: Number of usable IPs: 251
+VERBOSE: Maximum number of runners: 193
+193
+
+
+Convert-SubnetSizeToRunnersCount "10.0.0.0/24" -Verbose
+VERBOSE: Number of usable IPs: 251
+VERBOSE: Maximum number of runners: 193
+193
+```
+
+Example values for subnets:
+
 | Subnet size | IP addresses | Usable IP addresses | Max recommended # of runners |
 |-------------|--------------|---------------------|------------------------------|
 | /28         | 16           | 11                  | 8                            |
