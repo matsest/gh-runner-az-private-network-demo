@@ -272,6 +272,13 @@ function New-GitHubOrgHostedRunner {
         [hashtable]$AdditionalSettings = @{}
     )
 
+    # Check if runner already exist
+    $existingRunner = Get-GitHubOrgHostedRunner -OrganizationUsername $OrganizationUsername -Name $Name -RunnerGroupId $RunnerGroupId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    if ($existingRunner) {
+        Write-Warning "Runner with the name '$Name' in runner group already exists."
+        return $existingRunner
+    }
+
     $image = Get-GitHubOwnedImage -OrganizationUsername $OrganizationUsername -Name $ImageName
     if (-not $image) {
         throw "Could not find image with the name '$ImageName'"
@@ -290,13 +297,6 @@ function New-GitHubOrgHostedRunner {
     }
     # All settings
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
-
-    # Check if runner already exist
-    $existingRunner = Get-GitHubOrgHostedRunner -OrganizationUsername $OrganizationUsername -Name $Name -RunnerGroupId $RunnerGroupId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
-    if ($existingRunner) {
-        Write-Warning "Runner with the name '$Name' in runner group already exists."
-        return $existingRunner
-    }
 
     # Required permissions: "Administration" organization permissions (write)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/hosted-runners?apiVersion=2022-11-28#create-a-github-hosted-runner-for-an-organization
