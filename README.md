@@ -7,13 +7,13 @@ Why? You can use GitHub-hosted runners in an Azure VNET to connect privately to 
 > [!TIP]
 > This repo has been massively updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/) for a full end to end deployment. You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
 
-## Pre-requisites
+## Prerequisites
 
 - An Azure subscription with **Contributor** and **Network Contributor** permissions (least privilege) or **Owner** permissions
 - An **Team** or **Enterprise Cloud** GitHub organization with **organization Owner role** (required to run operations via GH CLI with Oauth scopes)
   - Working on identifying if a lesser-privileged approach is supported, either using Oauth scopes, GitHub Apps or fine-grained tokens (awaiting [discussion](https://github.com/orgs/community/discussions/149651#discussioncomment-12373322))
-- [GitHub CLI](https://cli.github.com/) (tested with 2.67)
-- PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with Az.Resources 7.8.1)
+- [GitHub CLI](https://cli.github.com/) (tested with 2.68.1)
+- PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with PowerShell 7.5.0 and Az.Resources 7.8.1)
 - [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install) (tested with 0.33.93)
 
 Note that there is limited support for Azure regions with Azure Private Networking. See supported Azure regions [here](https://docs.github.com/en/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-supported-regions).
