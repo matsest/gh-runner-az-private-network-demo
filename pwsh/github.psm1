@@ -266,7 +266,7 @@ function New-GitHubOrgHostedRunner {
         [ValidateSet('Ubuntu Latest', 'Ubuntu 24.04', 'Ubuntu 22.04')]
         [string]$ImageName = 'Ubuntu 24.04',
         [Parameter()]
-        [ValidateSet('2-core', '4-core', '8-core', '16-core', '32-core')]
+        [ValidateSet('2-core', '4-core', '8-core', '16-core', '32-core', '64-core')]
         [string]$Size = '2-core',
         [Parameter()]
         [hashtable]$AdditionalSettings = @{}
