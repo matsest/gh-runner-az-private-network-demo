@@ -279,8 +279,8 @@ function New-GitHubOrgHostedRunner {
 # MARK: Support functions
 function Merge-HashTable {
     param(
-        [hashtable] $Default,
-        [hashtable] $Update
+        [hashtable]$Default,
+        [hashtable]$Update
     )
 
     $default1 = $Default.Clone();
