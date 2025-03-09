@@ -23,13 +23,19 @@ Note that there is limited support for Azure regions with Azure Private Networki
 1. [Authenticate with GitHub CLI](https://cli.github.com/manual/gh_auth_login) by running:
 
 ``` powershell
+# Login
 gh auth login -s admin:org,write:network_configurations
+
+# If already logged in refresh scopes by running:
+gh auth refresh -h github.com -s admin:org,write:network_configurations
 ```
 
 2. [Authenticate with Azure PowerShell](https://learn.microsoft.com/en-us/powershell/azure/authenticate-azureps) by running:
 
 ```powershell
-Connect-AzAccount # Login
+# Login
+Connect-AzAccount
+# Set context to subscription
 Set-AzContext -Subscription <subscription name or id>
 ```
 
