@@ -86,7 +86,7 @@ $now = Get-Date -Format 'yyyy-MM-ddTHHmm'
 # Deploy template
 Write-Host "- Deploying Azure subnet configuration..."
 $deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
-    -ResourceGroupName $rg.ResourceGroupName -TemplateFile "$PSScriptRoot/../bicep/main.bicep" `
+    -ResourceGroupName $rg.ResourceGroupName -TemplateFile "$PSScriptRoot/bicep/main.bicep" `
     -githubDatabaseId $GitHubDatabaseId `
     -location $Location `
     -existingVnetName $vnet.Name `
