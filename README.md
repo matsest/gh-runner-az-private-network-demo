@@ -1,17 +1,17 @@
 # Azure Private Networking for GitHub-hosted Runners Demo
 
-Learning to set up Azure Private Networking for GitHub-hosted runners. Based on [this guide](https://docs.github.com/en/organizations/managing-organization-settings/configuring-private-networking-for-github-hosted-runners-in-your-organization) a full end-to-end automated deployement using PowerShell, Bicep and GitHub CLI.
+Learning to set up Azure Private Networking for GitHub-hosted runners. This repository provides an end-to-end automated deployment of Azure _and_ GitHub resources using PowerShell, Bicep and GitHub CLI - **all in less than one minute!** :zap:
 
 Why? You can use GitHub-hosted runners in an Azure VNET to connect privately to other resources. This enables you to use GitHub-managed infrastructure for CI/CD while providing you with full control over the networking policies of your runners. See more details in [the documentation](#official-documentation).
 
 > [!TIP]
-> I am currently re-working this demo with support for [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated!) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
+> This repo has been massively updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/) for a full end to end deployment. You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
 
 ## Pre-requisites
 
 - An Azure subscription with **Contributor** and **Network Contributor** permissions (least privilege) or **Owner** permissions
 - An **Team** or **Enterprise Cloud** GitHub organization with **organization Owner role** (required to run operations via GH CLI with Oauth scopes)
-  - TODO: Identify if lesser-privileged approach is supported on required APIs using GitHub Apps or fine-grained token (awaiting [discussion](https://github.com/orgs/community/discussions/149651#discussioncomment-12373322))
+  - Working on identifying if a lesser-privileged approach is supported, either using Oauth scopes, GitHub Apps or fine-grained tokens (awaiting [discussion](https://github.com/orgs/community/discussions/149651#discussioncomment-12373322))
 - [GitHub CLI](https://cli.github.com/) (tested with 2.67)
 - PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with Az.Resources 7.8.1)
 - [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install) (tested with 0.33.93)
@@ -23,7 +23,7 @@ Note that there is limited support for Azure regions with Azure Private Networki
 1. [Authenticate with GitHub CLI](https://cli.github.com/manual/gh_auth_login) by running:
 
 ``` powershell
-gh auth login -s admin:org
+gh auth login -s admin:org,write:network_configurations
 ```
 
 2. [Authenticate with Azure PowerShell](https://learn.microsoft.com/en-us/powershell/azure/authenticate-azureps) by running:
@@ -33,61 +33,100 @@ Connect-AzAccount # Login
 Set-AzContext -Subscription <subscription name or id>
 ```
 
-3. Deploy
+3. Deploy Azure and GitHub configuration:
 
-> [!WARNING]
-> Currently outdated - will be updated for the v2 version
-
-
-**Option 1: Sandbox deployment**: Run the following deployment script to create a new resource group, a new virtual network and configure a new subnet to be set up for private networking:
+**Option 1: Sandbox deployment**: Run the following script to create a new resource group, a new virtual network and configure a new subnet:
 
 ```powershell
-./scripts/deploy.ps1 -GitHubDatabaseId <databaseId>
+.scripts/deploy.ps1 -GitHubOrgUserName <github org name> `
+```
 
-# Output
-Registring GitHub.Network resource provider...
-Configuring resource group and virtual network...
-Deploying template...
+**Option 2: Deploy to existing vnet**: Run the following  script to create a new subnet in an existing virtual network and resource group:
+
+```powershell
+$vnet = Get-AzVirtualNetwork -ResourceGroupName -Name <name>
+.scripts/deploy.ps1 -GitHubOrgUserName <github org name> `
+    -SubnetAddressPrefix <address prefix> `
+    -SubnetName <subnet name>
+```
+
+### What will be deployed?
+- Azure:
+  - Sandbox deploy: resource group, vnet with subnet, NSG and network settings
+  - Existing vnet: subnet, NSG and network settings
+- GitHub (all configurations will be named after the vnet name):
+  - Hosted Compute Networking Configuration
+  - Runner Group (only available to private repositories)
+  - Runner (Ubuntu 24.04, 2-core)
+
+### Example output
+
+```powershell
+
+--------------------------------------------------------------------------------
+
+🚀 Deploying GitHub-hosted runners with Azure Private Networking
+
+Using GitHub organization '<org name>'
+Using Azure subscription: '<sub name>'
+Running in sandbox mode - will deploy everything into a new resource group
+
+--------------------------------------------------------------------------------
+
+- Registring GitHub.Network resource provider...
+    - Provider already registered!
+- Configuring resource group and virtual network...
+- Deploying Azure subnet configuration...
+    - Configured subnet: github-runner!
+- Creating GitHub hosted networking configuration...
+    - Created networking configuration: gh-private-vnet!
+- Creating GitHub runner group...
+    - Created runner group: gh-private-vnet!
+- Creating GitHub runner...
+    - Created runner: gh-private-vnet-ubuntu-24.04!
+
 ✅ Deployment complete!
-Network Settings Resource Id:
-<network settings resource id>
+
+Deployment for Azure and GitHub completed in: 0m50s
+
+--------------------------------------------------------------------------------
+
+🔗 Link to Azure resource group:
+https://portal.azure.com/#@<tenant i>/resource/subscriptions/<sub id>/resourceGroups/gh-private-runners
+
+🔗 Link to GitHub hosted compute networking configuration:
+https://github.com/organizations/<org name>/settings/network_configurations/<id>
+
+🔗 Link to GitHub runner group with runner:
+https://github.com/organizations/<org name>/settings/actions/runner-groups/<id>
+
+💡 Add the following to a GitHub Actions workflow to get started:
+
+.github/workflows/az-private-networking-demo.yml:
+---
+
+name: az-private-networking-demo
+on: [push]
+jobs:
+  demo:
+    runs-on:
+      group: gh-private-vnet
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show local IP address
+        run: hostname -I
+
 ```
-
-:point_right: Copy the `Network Settings Resource Id` value for the next step.
-
-**Option 2: Deploy to existing vnet**: If you want to set up a new subnet in an existing virtual network you can deploy the [`main.bicep`](./bicep/main.bicep) and provide the necessary parameters by editing the [`main.bicepparam`](./bicep/main.bicepparam) file, and then running the following command:
-
-```powershell
-$resourceGroupName = "<existing resource group name>"
-
-$deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
-    -ResourceGroupName $resourceGroupName -TemplateFile './bicep/main.bicep' `
-    -TemplateParameterFile "./bicep/main.bicepparam"
-
-$networkSettings = Get-AzResource -ResourceId $deploy.Outputs.networkSettingsId.value
-
-Write-Host "Network Settings Resource Id:"
-Write-Host $networkSettings.Tags['GitHubId']
-
-```
-
-:warning: Note that if you are deploying into an existing vnet with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will need to whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub. In that case you kan simplify the outbound NSG-rules to allow traffic to 'Internet' and handle the granular filtering in firewall rules.
-
-:point_right: Copy the `Network Settings Resource Id` value for the next step.
-
-4. Use the new privately networked GitHub-hosted runner!
-
-Learn more about managing access to runners [here](https://docs.github.com/en/enterprise-cloud@latest/actions/using-github-hosted-runners/using-larger-runners/controlling-access-to-larger-runners).
 
 ## Clean-up
 
 ### GitHub
 
-Done via GitHub.com:
+Done via GitHub.com (in order):
 
-1. [Remove the runner](https://docs.github.com/en/enterprise-cloud@latest/actions/hosting-your-own-runners/managing-self-hosted-runners/removing-self-hosted-runners)
-1. [Delete the runner group](https://docs.github.com/en/enterprise-cloud@latest/actions/hosting-your-own-runners/managing-self-hosted-runners/managing-access-to-self-hosted-runners-using-groups#removing-a-self-hosted-runner-group)
-2. [Delete the hosted networking configuration](https://docs.github.com/en/organizations/managing-organization-settings/configuring-private-networking-for-github-hosted-runners-in-your-organization#deleting-a-subnet)
+1. [Delete the runner](https://docs.github.com/en/enterprise-cloud@latest/actions/hosting-your-own-runners/managing-self-hosted-runners/removing-self-hosted-runners) (might take a few minutes)
+2. [Delete the runner group](https://docs.github.com/en/enterprise-cloud@latest/actions/hosting-your-own-runners/managing-self-hosted-runners/managing-access-to-self-hosted-runners-using-groups#removing-a-self-hosted-runner-group)
+3. [Delete the hosted networking configuration](https://docs.github.com/en/organizations/managing-organization-settings/configuring-private-networking-for-github-hosted-runners-in-your-organization#deleting-a-subnet)
 
 ### Azure
 
@@ -97,7 +136,7 @@ Done via GitHub.com:
 
 ```powershell
 # Remove the resource group with all resources
-Remove-AzResourceGroup -Name $ResourceGroupName
+Remove-AzResourceGroup -Name <name>
 ```
 
 #### Existing vnet deploy option:
@@ -173,6 +212,12 @@ Example values for common subnet sizes (/28 is the smallest useful subnet):
 A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#scenarios).
 
 Please note that default outbound access will [not be supported](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) for new Azure subnets after September 30, 2025.
+
+### Filtering traffic by FQDN via a Firewall
+
+If you are deploying into an existing vnet with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will can whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub.
+
+Optionally you kan simplify the outbound NSG-rules to allow traffic to 'Internet' and handle the granular filtering based on FQDNs in firewall rules.
 
 ### Other options
 
