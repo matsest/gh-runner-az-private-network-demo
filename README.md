@@ -100,7 +100,7 @@ Deployment for Azure and GitHub completed in: 0m50s
 --------------------------------------------------------------------------------
 
 🔗 Link to Azure resource group:
-https://portal.azure.com/#@<tenant i>/resource/subscriptions/<sub id>/resourceGroups/gh-private-runners
+https://portal.azure.com/<tenant id>/resource/subscriptions/<sub id>/resourceGroups/gh-private-runners
 
 🔗 Link to GitHub hosted compute networking configuration:
 https://github.com/organizations/<org name>/settings/network_configurations/<id>
