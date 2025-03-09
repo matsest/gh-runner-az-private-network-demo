@@ -23,8 +23,7 @@ query($login: String!){
 
     [string]$databaseId = $res.data.organization.databaseId
     if ([string]::IsNullOrEmpty($databaseId)) {
-        Write-Error "Could not determine database id for organization '$OrganizationUsername'"
-        return
+        throw "Could not determine database id for organization '$OrganizationUsername'"
     }
 
     $databaseId
@@ -93,8 +92,7 @@ function New-GitHubOrgHostedComputeNetworkingConfiguration {
         /orgs/$OrganizationUsername/settings/network-configurations `
         --input -
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to create networking configuration: '$Name'`n$res"
-        return
+        throw "Failed to create networking configuration: '$Name'`n$res"
     }
 
     $res | ConvertFrom-Json
@@ -171,14 +169,12 @@ function New-GitHubOrgRunnerGroup {
     # Required permissions: "Self-hosted runners" organization permissions (write)
     # https://docs.github.com/en/enterprise-cloud@latest/rest/actions/self-hosted-runner-groups?apiVersion=2022-11-28#create-a-self-hosted-runner-group-for-an-organization
     $res = $($allSettings | ConvertTo-Json ) | gh api --method POST `
-        --include `
         -H 'Accept: application/vnd.github+json' `
         -H 'X-GitHub-Api-Version: 2022-11-28' `
         /orgs/$OrganizationUsername/actions/runner-groups `
         --input -
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to create runner group: '$Name'`n$res"
-        return
+        throw "Failed to create runner group: '$Name'`n$res"
     }
 
     # Return as object
@@ -237,8 +233,13 @@ function New-GitHubOrgHostedRunner {
         [ValidateSet('2-core', '4-core', '8-core', '16-core', '32-core')]
         [string]$Size = '2-core',
         [Parameter()]
-        [hashtable]$AdditionalSettings
+        [hashtable]$AdditionalSettings = @{}
     )
+
+    $image = Get-GitHubOwnedImage -OrganizationUsername $OrganizationUsername -Name $ImageName
+    if (-not $image) {
+        throw "Could not find image with the name '$ImageName'"
+    }
 
     # Required settings
     $defaultSettings = @{
@@ -269,8 +270,7 @@ function New-GitHubOrgHostedRunner {
         /orgs/$OrganizationUsername/actions/hosted-runners `
         --input -
     if ($LASTEXITCODE -ne 0) {
-        Write-Error "Failed to create runner: '$Name'`n$res"
-        return
+        throw "Failed to create runner: '$Name'`n$res"
     }
 
     # Return as object
@@ -283,6 +283,14 @@ function Merge-HashTable {
         [hashtable]$Default,
         [hashtable]$Update
     )
+
+    # check if one hashtable is $null
+    if (-not $Default) {
+        return $Update
+    }
+    if (-not $Update) {
+        return $Default
+    }
 
     $default1 = $Default.Clone();
     foreach ($key in $Update.Keys) {
@@ -306,8 +314,7 @@ function Convert-SubnetSizeToRunnersCount {
     [int]$prefixLength = [System.Net.IPNetwork]::Parse($SubnetAddressPrefix).PrefixLength
 
     if ($prefixLength -gt 28) {
-        Write-Error "Number of available IPs is too small. Choose a larger subnet (min. /28). "
-        return
+        throw "Number of available IPs is too small. Choose a larger subnet (min. /28). "
     }
 
     # Calculate the number of available IPs based on CIDR Prefix

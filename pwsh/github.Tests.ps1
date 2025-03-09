@@ -71,4 +71,20 @@ Describe "Merge-HashTable" {
         $result["key1"] | Should -Be "value1"
         $result["key2"] | Should -Be "value2"
     }
+
+    It "should return the update hashtable if default null" {
+        $default = $null
+        $update = @{ key1 = "value1"; key2 = "value2" }
+        $result = Merge-HashTable -Default $default -Update $update
+        $result["key1"] | Should -Be "value1"
+        $result["key2"] | Should -Be "value2"
+    }
+
+    It "should return the default hashtable if update null" {
+        $default = @{ key1 = "value1"; key2 = "value2" }
+        $update = $null
+        $result = Merge-HashTable -Default $default -Update $update
+        $result["key1"] | Should -Be "value1"
+        $result["key2"] | Should -Be "value2"
+    }
 }
