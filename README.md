@@ -5,7 +5,7 @@ Learning to set up Azure Private Networking for GitHub-hosted runners. This repo
 Why? You can use GitHub-hosted runners in an Azure VNET to connect privately to other resources. This enables you to use GitHub-managed infrastructure for CI/CD while providing you with full control over the networking policies of your runners. See more details in [the documentation](#official-documentation).
 
 > [!TIP]
-> This repo has been massively updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/) for a full end to end deployment. You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
+> This repo has been massively updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
 
 ## Prerequisites
 
@@ -76,22 +76,22 @@ $vnet = Get-AzVirtualNetwork -ResourceGroupName -Name <name>
 🚀 Deploying GitHub-hosted runners with Azure Private Networking
 
 Using GitHub organization '<org name>'
-Using Azure subscription: '<sub name>'
+Using Azure subscription '<sub name>'
 Running in sandbox mode - will deploy everything into a new resource group
 
 --------------------------------------------------------------------------------
 
 - Registring GitHub.Network resource provider...
-    - Provider already registered!
+    - Provider already registered
 - Configuring resource group and virtual network...
 - Deploying Azure subnet configuration...
-    - Configured subnet: github-runner!
+    - Configured subnet: github-runner
 - Creating GitHub hosted networking configuration...
-    - Created networking configuration: gh-private-vnet!
+    - Created networking configuration: gh-private-vnet
 - Creating GitHub runner group...
-    - Created runner group: gh-private-vnet!
+    - Created runner group: gh-private-vnet
 - Creating GitHub runner...
-    - Created runner: gh-private-vnet-ubuntu-24.04!
+    - Created runner: gh-private-vnet-ubuntu-24.04
 
 ✅ Deployment complete!
 

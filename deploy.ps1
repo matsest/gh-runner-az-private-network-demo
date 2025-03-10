@@ -48,7 +48,7 @@ Write-Host "`n🚀 Deploying GitHub-hosted runners with Azure Private Networking
 
 Write-Host "Using GitHub organization '$GitHubOrgUserName'"
 $Context = Get-AzContext
-Write-Host "Using Azure subscription: '$($Context.Subscription.Name)'"
+Write-Host "Using Azure subscription '$($Context.Subscription.Name)'"
 
 if ($PSCmdlet.ParameterSetName -eq 'NewVnet') {
     Write-Host "Running in sandbox mode - will deploy everything into a new resource group"
@@ -62,10 +62,10 @@ Write-Host "`n------------------------------------------------------------------
 Write-Host "- Registring GitHub.Network resource provider..."
 $provider = Get-AzResourceProvider -ProviderNamespace 'GitHub.Network'
 if ($provider.RegistrationState -eq 'Registered') {
-    Write-Host "    - Provider already registered!"
+    Write-Host "    - Provider already registered"
 } else {
     $null = Register-AzResourceProvider -ProviderNamespace GitHub.Network
-    Write-Host "    - Provider registered!"
+    Write-Host "    - Provider registered"
 }
 
 if ($PSCmdlet.ParameterSetName -eq 'NewVnet') {
@@ -92,7 +92,7 @@ $deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
     -existingVnetName $vnet.Name `
     -subnetPrefix $SubnetAddressPrefix `
     -subnetName $SubnetName
-Write-Host "    - Configured subnet: $($deploy.Outputs.subnetName.value)!"
+Write-Host "    - Configured subnet: $($deploy.Outputs.subnetName.value)"
 
 $networkSettingsId = $deploy.Outputs.networkSettingsGitHubId.value
 if ([string]::IsNullOrEmpty($networkSettingsId)) {
@@ -106,7 +106,7 @@ $networkConfiguration = New-GitHubOrgHostedComputeNetworkingConfiguration `
     -OrganizationUsername $GitHubOrgUserName `
     -Name $vnet.Name `
     -NetworkSettingsId $networkSettingsId
-Write-Host "    - Created networking configuration: $($networkConfiguration.name)!"
+Write-Host "    - Created networking configuration: $($networkConfiguration.name)"
 
 # Create runner group
 Write-Host "- Creating GitHub runner group..."
@@ -115,7 +115,7 @@ $runnerGroup = New-GitHubOrgRunnerGroup `
     -Name $vnet.Name `
     -NetworkConfigurationId $networkConfiguration.id `
     -Visibility 'private'
-Write-Host "    - Created runner group: $($runnerGroup.name)!"
+Write-Host "    - Created runner group: $($runnerGroup.name)"
 
 # Create runner
 Write-Host "- Creating GitHub runner..."
@@ -128,7 +128,7 @@ $runner = New-GitHubOrgHostedRunner `
     -MaximumRunners $maxRunnerCount `
     -ImageName $runnerType `
     -Size '2-core'
-Write-Host "    - Created runner: $($runner.name)!"
+Write-Host "    - Created runner: $($runner.name)"
 
 # MARK: Summary
 Write-Host "`n✅ Deployment complete!`n"
