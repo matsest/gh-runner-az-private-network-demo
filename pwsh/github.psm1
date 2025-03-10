@@ -7,11 +7,11 @@ function Get-GitHubOrgDatabaseId {
     param (
         [Parameter(Mandatory)]
         [string]
-        $OrganizationUsername
+        $Organzation
     )
 
     # https://docs.github.com/en/graphql/reference/objects#organization
-    $res = gh api graphql -F login=$OrganizationUsername -f query='
+    $res = gh api graphql -F login=$Organzation -f query='
 query($login: String!){
   organization (login: $login)
   {
@@ -23,7 +23,7 @@ query($login: String!){
 
     [string]$databaseId = $res.data.organization.databaseId
     if ([string]::IsNullOrEmpty($databaseId)) {
-        throw "Could not determine database id for organization '$OrganizationUsername'"
+        throw "Could not determine database id for organization '$Organzation'"
     }
 
     $databaseId
@@ -34,7 +34,7 @@ function Get-GitHubOrgHostedComputeNetworkingConfiguration {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$OrganizationUsername,
+        [string]$Organzation,
         [Parameter(Mandatory)]
         [string]$Name
     )
@@ -45,11 +45,11 @@ function Get-GitHubOrgHostedComputeNetworkingConfiguration {
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
         --paginate --slurp `
-        /orgs/$OrganizationUsername/settings/network-configurations `
+        /orgs/$Organzation/settings/network-configurations `
     | ConvertFrom-Json -Depth 100
 
     if ($res.status -eq 404) {
-        Write-Warning "Could not find any network configurations for organization '$OrganizationUsername'"
+        Write-Warning "Could not find any network configurations for organization '$Organzation'"
         return
     }
 
@@ -66,7 +66,7 @@ function New-GitHubOrgHostedComputeNetworkingConfiguration {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$OrganizationUsername,
+        [string]$Organzation,
         [Parameter(Mandatory)]
         [string]$Name,
         [Parameter(Mandatory)]
@@ -83,7 +83,7 @@ function New-GitHubOrgHostedComputeNetworkingConfiguration {
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
 
     # Check if networking configuration already exist
-    $existingNetworkConfig = Get-GitHubOrgHostedComputeNetworkingConfiguration -OrganizationUsername $OrganizationUsername -Name $Name -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    $existingNetworkConfig = Get-GitHubOrgHostedComputeNetworkingConfiguration -Organzation $Organzation -Name $Name -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
     if ($existingNetworkConfig) {
         Write-Warning "Networking configuration with the name '$Name' already exists."
         return $existingNetworkConfig
@@ -94,7 +94,7 @@ function New-GitHubOrgHostedComputeNetworkingConfiguration {
     $res = ($allSettings | ConvertTo-Json) | gh api --method POST `
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
-        /orgs/$OrganizationUsername/settings/network-configurations `
+        /orgs/$Organzation/settings/network-configurations `
         --input -
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create networking configuration: '$Name'`n$res"
@@ -108,7 +108,7 @@ function Get-GitHubOrgRunnerGroup {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$OrganizationUsername,
+        [string]$Organzation,
         [Parameter(Mandatory)]
         [string]$Name
     )
@@ -118,12 +118,12 @@ function Get-GitHubOrgRunnerGroup {
     $res = gh api --method GET `
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
-        /orgs/$OrganizationUsername/actions/runner-groups `
+        /orgs/$Organzation/actions/runner-groups `
         --paginate --slurp
     | ConvertFrom-Json -Depth 100
 
     if ($res.status -eq 404) {
-        Write-Warning "Could not find any runner groups for organization '$OrganizationUsername'"
+        Write-Warning "Could not find any runner groups for organization '$Organzation'"
         return
     }
 
@@ -140,7 +140,7 @@ function New-GitHubOrgRunnerGroup {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$OrganizationUsername,
+        [string]$Organzation,
         [Parameter(Mandatory)]
         [string]$Name,
         [Parameter()]
@@ -165,7 +165,7 @@ function New-GitHubOrgRunnerGroup {
     $allSettings = Merge-HashTable -Default $defaultSettings -Update $AdditionalSettings
 
     # Check if runner group already exist
-    $existingRunnerGroup = Get-GitHubOrgRunnerGroup -OrganizationUsername $OrganizationUsername -Name $Name -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    $existingRunnerGroup = Get-GitHubOrgRunnerGroup -Organzation $Organzation -Name $Name -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
     if ($existingRunnerGroup) {
         Write-Warning "Runner group with the name '$Name' already exists."
         return $existingRunnerGroup
@@ -176,7 +176,7 @@ function New-GitHubOrgRunnerGroup {
     $res = $($allSettings | ConvertTo-Json ) | gh api --method POST `
         -H 'Accept: application/vnd.github+json' `
         -H 'X-GitHub-Api-Version: 2022-11-28' `
-        /orgs/$OrganizationUsername/actions/runner-groups `
+        /orgs/$Organzation/actions/runner-groups `
         --input -
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create runner group: '$Name'`n$res"
@@ -191,7 +191,7 @@ function Get-GitHubOrgHostedRunner {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$OrganizationUsername,
+        [string]$Organzation,
         [Parameter(Mandatory)]
         [string]$Name,
         [Parameter(Mandatory)]
@@ -203,11 +203,11 @@ function Get-GitHubOrgHostedRunner {
     $res = gh api --method GET `
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
-        /orgs/$OrganizationUsername/actions/hosted-runners `
+        /orgs/$Organzation/actions/hosted-runners `
     | ConvertFrom-Json -Depth 100
 
     if ($res.status -eq 404) {
-        Write-Warning "Could not find any GitHub-hosted runners for organization '$OrganizationUsername'"
+        Write-Warning "Could not find any GitHub-hosted runners for organization '$Organzation'"
         return
     }
 
@@ -224,7 +224,7 @@ function Get-GitHubOwnedImage {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$OrganizationUsername,
+        [string]$Organzation,
         [Parameter(Mandatory)]
         [string]$Name
     )
@@ -234,11 +234,11 @@ function Get-GitHubOwnedImage {
     $res = gh api --method GET `
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
-        /orgs/$OrganizationUsername/actions/hosted-runners/images/github-owned `
+        /orgs/$Organzation/actions/hosted-runners/images/github-owned `
     | ConvertFrom-Json -Depth 100
 
     if ($res.status -eq 404) {
-        Write-Warning "Could not find any images for organization '$OrganizationUsername'"
+        Write-Warning "Could not find any images for organization '$Organzation'"
         return
     }
 
@@ -255,7 +255,7 @@ function New-GitHubOrgHostedRunner {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$OrganizationUsername,
+        [string]$Organzation,
         [Parameter(Mandatory)]
         [string]$Name,
         [Parameter(Mandatory)]
@@ -273,13 +273,13 @@ function New-GitHubOrgHostedRunner {
     )
 
     # Check if runner already exist
-    $existingRunner = Get-GitHubOrgHostedRunner -OrganizationUsername $OrganizationUsername -Name $Name -RunnerGroupId $RunnerGroupId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+    $existingRunner = Get-GitHubOrgHostedRunner -Organzation $Organzation -Name $Name -RunnerGroupId $RunnerGroupId -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
     if ($existingRunner) {
         Write-Warning "Runner with the name '$Name' in runner group already exists."
         return $existingRunner
     }
 
-    $image = Get-GitHubOwnedImage -OrganizationUsername $OrganizationUsername -Name $ImageName
+    $image = Get-GitHubOwnedImage -Organzation $Organzation -Name $ImageName
     if (-not $image) {
         throw "Could not find image with the name '$ImageName'"
     }
@@ -304,7 +304,7 @@ function New-GitHubOrgHostedRunner {
     $res = ($allSettings | ConvertTo-Json) | gh api --method POST `
         -H "Accept: application/vnd.github+json" `
         -H "X-GitHub-Api-Version: 2022-11-28" `
-        /orgs/$OrganizationUsername/actions/hosted-runners `
+        /orgs/$Organzation/actions/hosted-runners `
         --input -
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to create runner: '$Name'`n$res"

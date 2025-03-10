@@ -1,7 +1,7 @@
 [CmdletBinding(DefaultParameterSetName = 'NewVnet')]
 param (
     [Parameter(Mandatory)]
-    [string]$GitHubOrgUserName,
+    [string]$GitHubOrganization,
     [Parameter(ParameterSetName = 'NewVnet')]
     [string]$Location = 'northeurope',
     [Parameter(ParameterSetName = 'NewVnet')]
@@ -41,12 +41,12 @@ if (-not($roles -contains 'Owner' -or ($roles -contains 'Contributor' -and $role
 $maxRunnerCount = Convert-SubnetSizeToRunnersCount -SubnetAddressPrefix $SubnetAddressPrefix
 
 # Get GitHub database id
-$GitHubDatabaseId = Get-GitHubOrgDatabaseId -OrganizationUsername $GitHubOrgUserName
+$GitHubDatabaseId = Get-GitHubOrgDatabaseId -Organzation $GitHubOrganization
 
 Write-Host "`n--------------------------------------------------------------------------------"
 Write-Host "`n🚀 Deploying GitHub-hosted runners with Azure Private Networking`n"
 
-Write-Host "Using GitHub organization '$GitHubOrgUserName'"
+Write-Host "Using GitHub organization '$GitHubOrganization'"
 $Context = Get-AzContext
 Write-Host "Using Azure subscription '$($Context.Subscription.Name)'"
 
@@ -103,7 +103,7 @@ if ([string]::IsNullOrEmpty($networkSettingsId)) {
 # Create hosted compute networking configuration
 Write-Host "- Creating GitHub hosted networking configuration..."
 $networkConfiguration = New-GitHubOrgHostedComputeNetworkingConfiguration `
-    -OrganizationUsername $GitHubOrgUserName `
+    -Organzation $GitHubOrganization `
     -Name $vnet.Name `
     -NetworkSettingsId $networkSettingsId
 Write-Host "    - Created networking configuration: $($networkConfiguration.name)"
@@ -111,7 +111,7 @@ Write-Host "    - Created networking configuration: $($networkConfiguration.name
 # Create runner group
 Write-Host "- Creating GitHub runner group..."
 $runnerGroup = New-GitHubOrgRunnerGroup `
-    -OrganizationUsername $GitHubOrgUserName `
+    -Organzation $GitHubOrganization `
     -Name $vnet.Name `
     -NetworkConfigurationId $networkConfiguration.id `
     -Visibility 'private'
@@ -122,7 +122,7 @@ Write-Host "- Creating GitHub runner..."
 $runnerType = "Ubuntu 24.04"
 $runnerTypeSafeName = ($runnerType -replace ' ', '-').ToLower()
 $runner = New-GitHubOrgHostedRunner `
-    -OrganizationUsername $GitHubOrgUserName `
+    -Organzation $GitHubOrganization `
     -Name "$($vnet.Name)-$($runnerTypeSafeName)" `
     -RunnerGroupId $runnerGroup.id `
     -MaximumRunners $maxRunnerCount `
@@ -141,10 +141,10 @@ Write-Host "`n🔗 Link to Azure resource group:"
 Write-Host "https://portal.azure.com/#@$($Context.Tenant.Id)/resource$($rg.ResourceId)"
 
 Write-Host "`n🔗 Link to GitHub hosted compute networking configuration:"
-Write-Host "https://github.com/organizations/$GitHubOrgUserName/settings/network_configurations/$($networkConfiguration.id)"
+Write-Host "https://github.com/organizations/$GitHubOrganization/settings/network_configurations/$($networkConfiguration.id)"
 
 Write-Host "`n🔗 Link to GitHub runner group with runner:"
-Write-Host "https://github.com/organizations/$GitHubOrgUserName/settings/actions/runner-groups/$($runnerGroup.id)"
+Write-Host "https://github.com/organizations/$GitHubOrganization/settings/actions/runner-groups/$($runnerGroup.id)"
 
 $yaml = @"
 
