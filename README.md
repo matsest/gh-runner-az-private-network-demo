@@ -50,7 +50,7 @@ Set-AzContext -Subscription <subscription name or id>
 **Option 2: Deploy to existing vnet**: Run the following  script to create a new subnet in an existing virtual network and resource group:
 
 ```powershell
-$vnet = Get-AzVirtualNetwork -ResourceGroupName -Name <name>
+$vnet = Get-AzVirtualNetwork -ResourceGroupName <rg name> -Name <name>
 
 ./deploy.ps1 -GitHubOrganization <github org name> `
     -Vnet $vnet `
