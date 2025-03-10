@@ -44,7 +44,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         }
       }
       {
-        name: 'allow-vnet-outbound-to-vnet'
+        name: 'allow-outbound-vnet'
         properties: {
           protocol: 'TCP'
           sourcePortRange: '*'
@@ -62,7 +62,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         properties: {
           protocol: '*'
           sourcePortRange: '*'
-          destinationPortRange: '*'
+          destinationPortRange: '443'
           sourceAddressPrefix: '*'
           access: 'Allow'
           priority: 210
@@ -141,7 +141,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         properties: {
           protocol: '*'
           sourcePortRange: '*'
-          destinationPortRange: '*'
+          destinationPortRange: '443'
           sourceAddressPrefix: '*'
           access: 'Allow'
           priority: 220
@@ -223,7 +223,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
         properties: {
           protocol: '*'
           sourcePortRange: '*'
-          destinationPortRange: '*'
+          destinationPortRange: '443'
           sourceAddressPrefix: '*'
           destinationAddressPrefix: 'Storage'
           access: 'Allow'
