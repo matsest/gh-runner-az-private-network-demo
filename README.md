@@ -12,6 +12,7 @@ Why? You can use GitHub-hosted runners in an Azure VNET to connect privately to 
 - An Azure subscription with **Contributor** and **Network Contributor** permissions (least privilege) or **Owner** permissions
 - An **Team** or **Enterprise Cloud** GitHub organization with **organization Owner role** (required to run operations via GH CLI with Oauth scopes)
   - Working on identifying if a lesser-privileged approach is supported, either using Oauth scopes, GitHub Apps or fine-grained tokens (awaiting [discussion](https://github.com/orgs/community/discussions/149651#discussioncomment-12373322))
+  - If you have a newer GitHub organization you will need to [edit the default budget](https://docs.github.com/en/billing/using-the-new-billing-platform/preventing-overspending#editing-or-deleting-a-budget) for Actions to more than $0.
 - [GitHub CLI](https://cli.github.com/) (tested with 2.68.1)
 - PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with PowerShell 7.5.0 and Az.Resources 7.8.1)
 - [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install) (tested with 0.33.93)
