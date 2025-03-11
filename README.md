@@ -215,7 +215,7 @@ Example values for common subnet sizes (/28 is the smallest useful subnet):
 | /24         | 256          | 251                 | 193                          |
 | /23         | 512          | 507                 | 390                          |
 
-### Static IP not supported
+### GitHub Static IP not supported
 
 A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#scenarios).
 
