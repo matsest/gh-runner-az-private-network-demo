@@ -8,7 +8,7 @@ This repository provides an end-to-end automated deployment of Azure _and_ GitHu
  - Restrict what GitHub-hosted runners can access or connect to with full control over outbound network policies.
  - Monitor network logs for GitHub-hosted runners and view all connectivity to and from a runner.
 
-See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-network-communication) for more details about how this works.
+See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-network-communication) for more details about how the integration between GitHub and Azure works.
 
 > [!TIP]
 > This repo has been significantly updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
@@ -185,7 +185,7 @@ Remove-AzResource -Name $networkSettingsName `
 
 There will be a minimal Azure-related cost for network traffic depending on your setup, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution.
 
-Note that included GitHub Actions minutes for GitHub Enterprise Cloud does **not** apply to larger runners, so all usage will be billed per-minute according to the rates linked above.
+Note that included GitHub Actions minutes for GitHub Team/Enterprise Cloud does **not** apply to larger runners, so all usage will be billed per-minute according to the rates linked above.
 
 Examples:
 - One 2-core Linux runner running a 3 minute job 10 times a day: $0.008/min * 3 min * 10 = $0.24 per day
