@@ -1,18 +1,24 @@
 # Azure Private Networking for GitHub-hosted Runners Demo
 
-Learning to set up Azure Private Networking for GitHub-hosted runners. This repository provides an end-to-end automated deployment of Azure _and_ GitHub resources using PowerShell, Bicep and GitHub CLI - **all in less than one minute!** :zap:
+This repository provides an end-to-end automated deployment of Azure _and_ GitHub resources using PowerShell, Bicep and GitHub CLI - **all in less than one minute!** :zap:
 
-Why? You can use GitHub-hosted runners in an Azure VNET to connect privately to other resources. This enables you to use GitHub-managed infrastructure for CI/CD while providing you with full control over the networking policies of your runners. See more details in [the documentation](#official-documentation).
+ Using GitHub-hosted runners within Azure VNET allows you to perform the following actions.
+
+ - Privately connect a runner to resources inside an Azure VNET without opening internet ports, including on-premises resources accessible from the Azure VNET.
+ - Restrict what GitHub-hosted runners can access or connect to with full control over outbound network policies.
+ - Monitor network logs for GitHub-hosted runners and view all connectivity to and from a runner.
+
+See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-network-communication) for more details about how this works.
 
 > [!TIP]
-> This repo has been massively updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
+> This repo has been significantly updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
 
 ## Prerequisites
 
 - An Azure subscription with **Contributor** and **Network Contributor** permissions (least privilege) or **Owner** permissions
 - An **Team** or **Enterprise Cloud** GitHub organization with **organization Owner role** (required to run operations via GH CLI with Oauth scopes)
   - Working on identifying if a lesser-privileged approach is supported, either using Oauth scopes, GitHub Apps or fine-grained tokens (awaiting [discussion](https://github.com/orgs/community/discussions/149651#discussioncomment-12373322))
-  - If you have a newer GitHub organization you will need to [edit the default budget](https://docs.github.com/en/billing/using-the-new-billing-platform/preventing-overspending#editing-or-deleting-a-budget) for Actions to more than $0.
+  - If you have a newer GitHub organization you will need to [edit the default budget](https://docs.github.com/en/billing/using-the-new-billing-platform/preventing-overspending#editing-or-deleting-a-budget) for Actions to more than $0. See [this](#cost) for more details on costs.
 - [GitHub CLI](https://cli.github.com/) (tested with 2.68.1)
 - PowerShell 7.x with [Azure PowerShell modules](https://learn.microsoft.com/en-us/powershell/azure/install-azure-powershell) (tested with PowerShell 7.5.0 and Az.Resources 7.8.1)
 - [Azure Bicep](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install) (tested with 0.33.93)
@@ -177,7 +183,7 @@ Remove-AzResource -Name $networkSettingsName `
 
 ### Cost
 
-There will be a minimal Azure-related cost for network traffic depending on your setup, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - no idle cost for this solution.
+There will be a minimal Azure-related cost for network traffic depending on your setup, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution.
 
 Note that included GitHub Actions minutes for GitHub Enterprise Cloud does **not** apply to larger runners, so all usage will be billed per-minute according to the rates linked above.
 
@@ -226,7 +232,15 @@ Please note that default outbound access will [not be supported](https://learn.m
 
 If you are deploying into an existing vnet with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will can whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub.
 
-Optionally you kan simplify the outbound NSG-rules to allow traffic to 'Internet' and handle the granular filtering based on FQDNs in firewall rules.
+Optionally you kan simplify the outbound NSG-rules to only allow traffic to 'Internet' with an explicit rule and handle the granular filtering based on FQDNs in firewall rules. This is also normally allowed in NSGs as part of the [default security rules](https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview#outbound), unless overridden with deny rules.
+
+### Runner image and installed software
+
+This demo [only supports](https://github.com/matsest/gh-runner-az-private-network-demo/blob/0fe8a739f66d9fd6b6dbfd9b939990740d62aefd/pwsh/github.psm1#L266) Ubuntu images.
+
+Currently Linux x64 and Windows x64 images is [officially supported](https://docs.github.com/en/actions/using-github-hosted-runners/using-larger-runners/about-larger-runners#runner-images) with Azure Private Networking. Images are automatically updated weekly and available software with versions is documented [here](https://github.com/actions/runner-images?tab=readme-ov-file#available-images). Images can be found from the API via the [`Get-GitHubOwnedImage`](https://github.com/matsest/gh-runner-az-private-network-demo/blob/0fe8a739f66d9fd6b6dbfd9b939990740d62aefd/pwsh/github.psm1#L223) function.
+
+Support for macOS images is on the [roadmap with an uncertain timeline](https://github.com/github/roadmap/issues/982#issuecomment-2523968613), together with support for [custom images](https://github.com/github/roadmap/issues/959).
 
 ### Other options
 
