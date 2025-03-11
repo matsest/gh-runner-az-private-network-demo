@@ -8,7 +8,7 @@ This repository provides an end-to-end automated deployment of Azure _and_ GitHu
  - Restrict what GitHub-hosted runners can access or connect to with full control over outbound network policies.
  - Monitor network logs for GitHub-hosted runners and view all connectivity to and from a runner.
 
-See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-network-communication) for more details about how the integration between GitHub and Azure works.
+See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-network-communication) for more details about how the integration between GitHub and Azure works. Additional details is available in this repo in the [learn more](#learn-more) section.
 
 > [!TIP]
 > This repo has been significantly updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
