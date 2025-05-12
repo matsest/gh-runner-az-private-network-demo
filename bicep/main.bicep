@@ -10,12 +10,21 @@ param subnetPrefix string
 // Optional params
 @description('Name of the subnet')
 param subnetName string = 'github-runner'
+
+@description('Enable or disable default outbound access to the internet. Note that this will be retired in September 2025. When set to false, either ensure connectivity through deployNatGateway param or through routing to a Firewall to handle egress. Learn more: https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access')
+param defaultOutboundAccess bool = true
+@description('Enable or disable the deployment of a NAT gateway for the subnet. This is required if defaultOutboundAccess is set to false and other methods for outbound connectivity are not in place.')
+param deployNatGateway bool = false
 @description('Base name for new resources')
 param baseName string = '${existingVnetName}-${subnetName}'
 @description('Name of the network security group')
 param nsgName string = '${baseName}-nsg'
 @description('Name of the network settings')
 param networkSettingsName string = '${baseName}-networksettings'
+@description('Name of the public IP address for the NAT gateway')
+param publicIpName string = '${baseName}-natgw-ip'
+@description('Name of the NAT gateway')
+param natGatewayName string = '${baseName}-natgw'
 @description('Custom network security group rules to be used for additional outbound openings. Start on priority 300')
 param customNsgRules array = []
 
@@ -236,11 +245,44 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
   }
 }
 
+resource publicIp 'Microsoft.Network/publicIPAddresses@2024-05-01' = if (deployNatGateway) {
+  name: publicIpName
+  location: location
+  sku: {
+    name: 'Standard'
+    tier: 'Regional'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    idleTimeoutInMinutes: 10
+  }
+}
+
+resource natGateway 'Microsoft.Network/natGateways@2024-05-01' = if (deployNatGateway) {
+  name: natGatewayName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    idleTimeoutInMinutes: 10
+    publicIpAddresses: [
+      {
+        id: publicIp.id
+      }
+    ]
+  }
+}
+
 resource subnet 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
   name: subnetName
   parent: vnet
   properties: {
     addressPrefix: subnetPrefix
+    defaultOutboundAccess: defaultOutboundAccess
+    natGateway: deployNatGateway ? {
+      id: natGateway.id
+    } : null
     delegations: [
       {
         name: 'GitHub.Network/networkSettings'

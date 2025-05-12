@@ -15,7 +15,15 @@ param (
     [Parameter(ParameterSetName = 'ExistingVnet')]
     [string]$SubnetName = 'github-runner',
     [Parameter(ParameterSetName = 'ExistingVnet', Mandatory)]
-    [object]$Vnet
+    [object]$Vnet,
+
+    [Parameter(ParameterSetName = 'NewVnet')]
+    [Parameter(ParameterSetName = 'ExistingVnet')]
+    [switch]$DeployNatGateway = $false,
+
+    [Parameter(ParameterSetName = 'NewVnet')]
+    [Parameter(ParameterSetName = 'ExistingVnet')]
+    [switch]$DefaultOutBoundAccess = $(!$DeployNatGateway) # Default to true if NAT gateway is not deployed
 )
 
 $startTime = Get-Date
@@ -55,6 +63,9 @@ if ($PSCmdlet.ParameterSetName -eq 'NewVnet') {
 } else {
     Write-Host "Running in existing vnet mode - will use existing virtual network"
 }
+if ($DeployNatGateway) {
+    Write-Host "Deploying NAT gateway with public IP 💸"
+}
 
 Write-Host "`n--------------------------------------------------------------------------------`n"
 
@@ -86,12 +97,15 @@ $now = Get-Date -Format 'yyyy-MM-ddTHHmm'
 # Deploy template
 Write-Host "- Deploying Azure subnet configuration..."
 $deploy = New-AzResourceGroupDeployment -Name "gh-private-runners-$now" `
-    -ResourceGroupName $rg.ResourceGroupName -TemplateFile "$PSScriptRoot/bicep/main.bicep" `
+    -ResourceGroupName $rg.ResourceGroupName `
+    -TemplateFile "$PSScriptRoot/bicep/main.bicep" `
     -githubDatabaseId $GitHubDatabaseId `
     -location $Location `
     -existingVnetName $vnet.Name `
     -subnetPrefix $SubnetAddressPrefix `
-    -subnetName $SubnetName
+    -subnetName $SubnetName `
+    -deployNatGateway $DeployNatGateway.ToBool() `
+    -defaultOutBoundAccess $DefaultOutBoundAccess.ToBool()
 Write-Host "    - Configured subnet: $($deploy.Outputs.subnetName.value)"
 
 $networkSettingsId = $deploy.Outputs.networkSettingsGitHubId.value
