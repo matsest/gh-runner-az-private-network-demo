@@ -69,6 +69,7 @@ $vnet = Get-AzVirtualNetwork -ResourceGroupName <rg name> -Name <name>
 - Azure:
   - Sandbox deploy: resource group, vnet with subnet, NSG and network settings
   - Existing vnet: subnet, NSG and network settings
+  - Optional (both): NAT Gateway with a static public IP
 - GitHub (all configurations will be named after the vnet name):
   - Hosted Compute Networking Configuration
   - Runner Group (only available to private repositories)
@@ -135,6 +136,8 @@ jobs:
 
 ## Clean-up
 
+Note that the order of deletion is important to ensure all resources can be successfully removed!
+
 ### GitHub
 
 Done via GitHub.com (in order):
@@ -163,18 +166,18 @@ $subnetName = <name>
 $nsgName = <name>
 $networkSettingsName = <name>
 
+# Delete network settings
+Remove-AzResource -Name $networkSettingsName `
+  -ResourceType 'GitHub.Network/networkSettings' `
+  -ResourceGroupName $resourceGroupName
+  -ApiVersion '2024-04-02'
+
 # Delete subnet
 $vnet = Get-AzVirtualNetwork $vnetName -ResourceGroupName $resourceGroupName
 Remove-AzVirtualNetworkSubnetConfig -Name $subnetName -VirtualNetwork $vnet | Set-AzVirtualNetwork
 
 # Delete NSG
 Remove-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resourceGroupName
-
-# Delete network settings
-Remove-AzResource -Name $networkSettingsName `
-  -ResourceType 'GitHub.Network/networkSettings' `
-  -ResourceGroupName $resourceGroupName
-  -ApiVersion '2024-04-02'
 ```
 
 </details>
@@ -183,7 +186,7 @@ Remove-AzResource -Name $networkSettingsName `
 
 ### Cost
 
-There will be a minimal Azure-related cost for network traffic depending on your setup, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution.
+There will be a minimal Azure-related cost for network traffic depending on your setup and usage, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution, unless using a NAT Gateway with a Public IP (around $37/month).
 
 Note that included GitHub Actions minutes for GitHub Team/Enterprise Cloud does **not** apply to larger runners, so all usage will be billed per-minute according to the rates linked above.
 
@@ -224,9 +227,13 @@ Example values for common subnet sizes (/28 is the smallest useful subnet):
 
 ### GitHub Static IP not supported
 
-A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#scenarios).
+A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) (note that implicit outbound access is retired on September 30th 2025.)
 
-Please note that default outbound access will [not be supported](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) for new Azure subnets after September 30, 2025.
+If you want to deploy this demo with a NAT Gateway using a static public IP for explicit outbound access you can add the following argument to the deployment:
+
+```powershell
+./deploy.ps1 -GitHubOrganization <github org name> -DeployNatGateway
+```
 
 ### Filtering traffic by FQDN via a Firewall
 
