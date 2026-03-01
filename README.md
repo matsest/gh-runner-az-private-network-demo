@@ -227,9 +227,9 @@ Example values for common subnet sizes (/28 is the smallest useful subnet):
 
 ### GitHub Static IP not supported
 
-A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) (note that implicit outbound access is retired on September 30th 2025.)
+A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) (note that implicit outbound access is retired on March 31st 2026.)
 
-If you want to deploy this demo with a NAT Gateway using a static public IP for explicit outbound access you can add the following argument to the deployment:
+If you want to deploy this demo with a NAT Gateway (zone redundant V2 version) using a static public IP for explicit outbound access you can add the following argument to the deployment:
 
 ```powershell
 ./deploy.ps1 -GitHubOrganization <github org name> -DeployNatGateway
