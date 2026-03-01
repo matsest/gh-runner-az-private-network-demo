@@ -23,7 +23,11 @@ param (
 
     [Parameter(ParameterSetName = 'NewVnet')]
     [Parameter(ParameterSetName = 'ExistingVnet')]
-    [switch]$DefaultOutBoundAccess = $(!$DeployNatGateway) # Default to true if NAT gateway is not deployed
+    [switch]$DefaultOutBoundAccess = $(!$DeployNatGateway), # Default to true if NAT gateway is not deployed
+
+    [Parameter(ParameterSetName = 'NewVnet')]
+    [Parameter(ParameterSetName = 'ExistingVnet')]
+    [switch]$ManualGitHubSetup
 )
 
 $startTime = Get-Date
@@ -32,9 +36,11 @@ $ErrorActionPreference = 'Stop'
 
 # MARK: Validation
 # Validate GitHub permissions
-$scopes = gh api -i / | Select-String "X-Oauth-Scopes: " -Raw
-if (-not $scopes -match "admin:org" -and -not $scopes -match "write:network_configurations") {
-    Write-Error "You need to have 'admin:org' scope to run this script"
+if (-not $ManualGitHubSetup) {
+    $scopes = gh api -i / | Select-String "X-Oauth-Scopes: " -Raw
+    if (-not $scopes -match "admin:org" -and -not $scopes -match "write:network_configurations") {
+        Write-Error "You need to have 'admin:org' scope to run this script. Use -ManualGitHubSetup to skip GitHub API calls."
+    }
 }
 
 # Validate Azure permissions
@@ -65,6 +71,9 @@ if ($PSCmdlet.ParameterSetName -eq 'NewVnet') {
 }
 if ($DeployNatGateway) {
     Write-Host "Deploying NAT gateway with public IP 💸"
+}
+if ($ManualGitHubSetup) {
+    Write-Host "Running in manual GitHub setup mode - Azure resources only"
 }
 
 Write-Host "`n--------------------------------------------------------------------------------`n"
@@ -114,53 +123,114 @@ if ([string]::IsNullOrEmpty($networkSettingsId)) {
 }
 
 # MARK: GitHub
-# Create hosted compute networking configuration
-Write-Host "- Creating GitHub hosted networking configuration..."
-$networkConfiguration = New-GitHubOrgHostedComputeNetworkingConfiguration `
-    -Organzation $GitHubOrganization `
-    -Name $vnet.Name `
-    -NetworkSettingsId $networkSettingsId
-Write-Host "    - Created networking configuration: $($networkConfiguration.name)"
+if (-not $ManualGitHubSetup) {
+    # Create hosted compute networking configuration
+    Write-Host "- Creating GitHub hosted networking configuration..."
+    $networkConfiguration = New-GitHubOrgHostedComputeNetworkingConfiguration `
+        -Organzation $GitHubOrganization `
+        -Name $vnet.Name `
+        -NetworkSettingsId $networkSettingsId
+    Write-Host "    - Created networking configuration: $($networkConfiguration.name)"
 
-# Create runner group
-Write-Host "- Creating GitHub runner group..."
-$runnerGroup = New-GitHubOrgRunnerGroup `
-    -Organzation $GitHubOrganization `
-    -Name $vnet.Name `
-    -NetworkConfigurationId $networkConfiguration.id `
-    -Visibility 'private'
-Write-Host "    - Created runner group: $($runnerGroup.name)"
+    # Create runner group
+    Write-Host "- Creating GitHub runner group..."
+    $runnerGroup = New-GitHubOrgRunnerGroup `
+        -Organzation $GitHubOrganization `
+        -Name $vnet.Name `
+        -NetworkConfigurationId $networkConfiguration.id `
+        -Visibility 'private'
+    Write-Host "    - Created runner group: $($runnerGroup.name)"
 
-# Create runner
-Write-Host "- Creating GitHub runner..."
-$runnerType = "Ubuntu 24.04"
-$runnerTypeSafeName = ($runnerType -replace ' ', '-').ToLower()
-$runner = New-GitHubOrgHostedRunner `
-    -Organzation $GitHubOrganization `
-    -Name "$($vnet.Name)-$($runnerTypeSafeName)" `
-    -RunnerGroupId $runnerGroup.id `
-    -MaximumRunners $maxRunnerCount `
-    -ImageName $runnerType `
-    -Size '2-core'
-Write-Host "    - Created runner: $($runner.name)"
+    # Create runner
+    Write-Host "- Creating GitHub runner..."
+    $runnerType = "Ubuntu 24.04"
+    $runnerTypeSafeName = ($runnerType -replace ' ', '-').ToLower()
+    $runner = New-GitHubOrgHostedRunner `
+        -Organzation $GitHubOrganization `
+        -Name "$($vnet.Name)-$($runnerTypeSafeName)" `
+        -RunnerGroupId $runnerGroup.id `
+        -MaximumRunners $maxRunnerCount `
+        -ImageName $runnerType `
+        -Size '2-core'
+    Write-Host "    - Created runner: $($runner.name)"
+}
 
 # MARK: Summary
 Write-Host "`n✅ Deployment complete!`n"
 $endTime = Get-Date
 $duration = $endTime - $startTime
-Write-Host "Deployment for Azure and GitHub completed in: $($duration.Minutes)m$($duration.Seconds)s"
+Write-Host "Deployment completed in: $($duration.Minutes)m$($duration.Seconds)s"
 Write-Host "`n--------------------------------------------------------------------------------"
 
 Write-Host "`n🔗 Link to Azure resource group:"
 Write-Host "https://portal.azure.com/#@$($Context.Tenant.Id)/resource$($rg.ResourceId)"
 
-Write-Host "`n🔗 Link to GitHub hosted compute networking configuration:"
-Write-Host "https://github.com/organizations/$GitHubOrganization/settings/network_configurations/$($networkConfiguration.id)"
+if ($ManualGitHubSetup) {
+    Write-Host "`n📋 Manual GitHub Setup Required`n"
+    Write-Host "Azure resources have been deployed. A GitHub organization admin must complete"
+    Write-Host "the GitHub setup manually using the values below.`n"
+    
+    Write-Host "Required values for manual setup:"
+    Write-Host "  - Organization: $GitHubOrganization"
+    Write-Host "  - Network Settings ID: $networkSettingsId"
+    Write-Host "  - Configuration Name: $($vnet.Name)"
+    Write-Host "  - Maximum Runners: $maxRunnerCount"
+    Write-Host "  - Runner Image: Ubuntu 24.04"
+    Write-Host "  - Runner Size: 2-core"
+    
+    Write-Host "`nSteps for GitHub organization admin to complete setup:"
+    Write-Host "  1. Go to: https://github.com/organizations/$GitHubOrganization/settings/network_configurations"
+    Write-Host "     - Click 'New network configuration'"
+    Write-Host "     - Name: $($vnet.Name)"
+    Write-Host "     - Network settings resource ID: $networkSettingsId"
+    Write-Host "     - Compute service: Actions"
+    Write-Host "     - Click 'Add network configuration'"
+    
+    Write-Host "`n  2. Go to: https://github.com/organizations/$GitHubOrganization/settings/actions/runner-groups"
+    Write-Host "     - Click 'New runner group'"
+    Write-Host "     - Name: $($vnet.Name)"
+    Write-Host "     - Select the network configuration created in step 1"
+    Write-Host "     - Visibility: Private (recommended for security)"
+    Write-Host "     - Click 'Create group'"
+    
+    Write-Host "`n  3. Go to: https://github.com/organizations/$GitHubOrganization/settings/actions/runners"
+    Write-Host "     - Click 'New runner' > 'New GitHub-hosted runner'"
+    Write-Host "     - Name: $($vnet.Name)-ubuntu-24.04"
+    Write-Host "     - Runner group: $($vnet.Name)"
+    Write-Host "     - Image: Ubuntu 24.04"
+    Write-Host "     - Size: 2-core"
+    Write-Host "     - Maximum runners: $maxRunnerCount"
+    Write-Host "     - Click 'Create runner'"
+    
+    $yaml = @"
 
-Write-Host "`n🔗 Link to GitHub runner group with runner:"
-Write-Host "https://github.com/organizations/$GitHubOrganization/settings/actions/runner-groups/$($runnerGroup.id)"
+.github/workflows/az-private-networking-demo.yml:
+---
 
-$yaml = @"
+name: az-private-networking-demo
+on: [push]
+jobs:
+  demo:
+    runs-on:
+      group: $($vnet.Name)
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show local IP address
+        run: hostname -I
+
+
+"@
+    
+    Write-Host "`n💡 After the GitHub admin completes the setup, add the following to a GitHub Actions workflow:"
+    Write-Host $yaml
+} else {
+    Write-Host "`n🔗 Link to GitHub hosted compute networking configuration:"
+    Write-Host "https://github.com/organizations/$GitHubOrganization/settings/network_configurations/$($networkConfiguration.id)"
+    
+    Write-Host "`n🔗 Link to GitHub runner group with runner:"
+    Write-Host "https://github.com/organizations/$GitHubOrganization/settings/actions/runner-groups/$($runnerGroup.id)"
+    
+    $yaml = @"
 
 .github/workflows/az-private-networking-demo.yml:
 ---
@@ -178,6 +248,7 @@ jobs:
 
 
 "@
-
-Write-Host "`n💡 Add the following to a GitHub Actions workflow to get started:"
-Write-Host $yaml
+    
+    Write-Host "`n💡 Add the following to a GitHub Actions workflow to get started:"
+    Write-Host $yaml
+}
