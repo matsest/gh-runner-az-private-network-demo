@@ -268,8 +268,7 @@ Steps for GitHub organization admin to complete setup:
      - Click 'New network configuration'
      - Name: gh-private-vnet
      - Network settings resource ID: <id>
-     - Compute service: Actions
-     - Click 'Add network configuration'
+     - Click 'Add Azure Virtual Network'
 
   2. Go to: https://github.com/organizations/<org name>/settings/actions/runner-groups
      - Click 'New runner group'
