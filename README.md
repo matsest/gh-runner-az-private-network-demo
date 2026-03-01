@@ -2,21 +2,21 @@
 
 This repository provides an end-to-end automated deployment of Azure _and_ GitHub resources using PowerShell, Bicep and GitHub CLI - **all in less than one minute!** :zap:
 
- Using GitHub-hosted runners within Azure VNET allows you to perform the following actions.
+Using GitHub-hosted runners within Azure VNET allows you to perform the following actions.
 
- - Privately connect a runner to resources inside an Azure VNET without opening internet ports, including on-premises resources accessible from the Azure VNET.
- - Restrict what GitHub-hosted runners can access or connect to with full control over outbound network policies.
- - Monitor network logs for GitHub-hosted runners and view all connectivity to and from a runner.
+- Privately connect a runner to resources inside an Azure VNET without opening internet ports, including on-premises resources accessible from the Azure VNET.
+- Restrict what GitHub-hosted runners can access or connect to with full control over outbound network policies.
+- Monitor network logs for GitHub-hosted runners and view all connectivity to and from a runner.
 
-See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-network-communication) for more details about how the integration between GitHub and Azure works. Additional details is available in this repo in the [learn more](#learn-more) section.
+See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/managing-organization-settings/about-azure-private-networking-for-github-hosted-runners-in-your-organization#about-network-communication) for more details about how the integration between GitHub and Azure works. Additional details are available in this repo in the [learn more](#learn-more) section.
 
 > [!TIP]
-> This repo has been significantly updated to support the [new GitHub API's allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
+> This repo has been significantly updated to support the [new GitHub APIs allowing for full end-to-end automated deployment](https://github.blog/changelog/2025-01-29-actions-github-hosted-larger-runner-network-configuration-rest-apis-ga/). You can check out the previous (still functional but not end-to-end automated) version see [v1 here](https://github.com/matsest/gh-runner-az-private-network-demo/tree/v1). (Run `git checkout v1` after cloning.)
 
 ## Prerequisites
 
 - An Azure subscription with **Contributor** and **Network Contributor** permissions (least privilege) or **Owner** permissions
-- An **Team** or **Enterprise Cloud** GitHub organization with **organization Owner role** (required to run operations via GH CLI with Oauth scopes)
+- A **Team** or **Enterprise Cloud** GitHub organization with **organization Owner role** (required to run operations via GH CLI with Oauth scopes)
   - Working on identifying if a lesser-privileged approach is supported, either using Oauth scopes, GitHub Apps or fine-grained tokens (awaiting [discussion](https://github.com/orgs/community/discussions/149651#discussioncomment-12373322))
   - If you have a newer GitHub organization/have been migrated to the new billing platform you will need to [edit the default budget](https://docs.github.com/en/billing/using-the-new-billing-platform/preventing-overspending#editing-or-deleting-a-budget) for Actions to more than $0. See [this](#cost) for more details on costs.
 - [GitHub CLI](https://cli.github.com/) (tested with 2.68.1)
@@ -29,7 +29,7 @@ Note that there is limited support for Azure regions with Azure Private Networki
 
 1. [Authenticate with GitHub CLI](https://cli.github.com/manual/gh_auth_login) by running:
 
-``` powershell
+```powershell
 # Login
 gh auth login -s admin:org,write:network_configurations
 
@@ -54,7 +54,7 @@ Set-AzContext -Subscription <subscription name or id>
 ./deploy.ps1 -GitHubOrganization <github org name>
 ```
 
-**Option 2: Deploy to existing vnet**: Run the following  script to create a new subnet in an existing virtual network and resource group:
+**Option 2: Deploy to existing VNET**: Run the following script to create a new subnet in an existing virtual network and resource group:
 
 ```powershell
 $vnet = Get-AzVirtualNetwork -ResourceGroupName <rg name> -Name <name>
@@ -67,10 +67,10 @@ $vnet = Get-AzVirtualNetwork -ResourceGroupName <rg name> -Name <name>
 
 ### What will be deployed?
 - Azure:
-  - Sandbox deploy: resource group, vnet with subnet, NSG and network settings
-  - Existing vnet: subnet, NSG and network settings
+  - Sandbox deploy: resource group, VNET with subnet, NSG and network settings
+  - Existing VNET: subnet, NSG and network settings
   - Optional (both): NAT Gateway with a static public IP
-- GitHub (all configurations will be named after the vnet name):
+- GitHub (all configurations will be named after the VNET name):
   - Hosted Compute Networking Configuration
   - Runner Group (only available to private repositories)
   - Runner (Ubuntu 24.04, 2-core)
@@ -157,7 +157,7 @@ Done via GitHub.com (in order):
 Remove-AzResourceGroup -Name <name>
 ```
 
-#### Existing vnet deploy option:
+#### Existing VNET deploy option:
 
 ```powershell
 $resourceGroupName = <name>
@@ -169,7 +169,7 @@ $networkSettingsName = <name>
 # Delete network settings
 Remove-AzResource -Name $networkSettingsName `
   -ResourceType 'GitHub.Network/networkSettings' `
-  -ResourceGroupName $resourceGroupName
+  -ResourceGroupName $resourceGroupName `
   -ApiVersion '2024-04-02'
 
 # Delete subnet
@@ -186,7 +186,9 @@ Remove-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resourceGroupNa
 
 ### Cost
 
-There will be a minimal Azure-related cost for network traffic depending on your setup and usage, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution, unless using a NAT Gateway with a Public IP (around $37/month).
+There will be a minimal Azure-related cost for network traffic depending on your setup and usage, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution.
+
+**Additional cost consideration:** If you deploy with the `-DeployNatGateway` option, there will be a fixed monthly cost of approximately $37/month for the NAT Gateway resource and associated Public IP, regardless of usage. See the [Azure Default Outbound Access and NAT Gateway](#azure-default-outbound-access-and-nat-gateway) section for more details.
 
 Note that included GitHub Actions minutes for GitHub Team/Enterprise Cloud does **not** apply to larger runners, so all usage will be billed per-minute according to the rates linked above.
 
@@ -206,12 +208,6 @@ Convert-SubnetSizeToRunnersCount "10.0.0.0/24" -Verbose
 VERBOSE: Number of usable IPs: 251
 VERBOSE: Maximum number of runners: 193
 193
-
-
-Convert-SubnetSizeToRunnersCount "10.0.0.0/24" -Verbose
-VERBOSE: Number of usable IPs: 251
-VERBOSE: Maximum number of runners: 193
-193
 ```
 
 Example values for common subnet sizes (/28 is the smallest useful subnet):
@@ -225,36 +221,48 @@ Example values for common subnet sizes (/28 is the smallest useful subnet):
 | /24         | 256          | 251                 | 193                          |
 | /23         | 512          | 507                 | 390                          |
 
-### GitHub Static IP not supported
+### Azure Default Outbound Access and NAT Gateway
 
-A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) (note that implicit outbound access is retired on September 30th 2025.)
+By default, Azure virtual networks have [default outbound access](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) (also known as implicit outbound access), which allows network interfaces to reach the internet without explicit configuration. However, **Azure is retiring default outbound access on March 31, 2026**. After this date, network interfaces in subnets will require an explicit outbound connectivity method to access internet resources.
 
-If you want to deploy this demo with a NAT Gateway using a static public IP for explicit outbound access you can add the following argument to the deployment:
+A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic, you have several options:
+
+- **NAT Gateway** (recommended for this demo) - Provides a static public IP for outbound traffic
+- **Azure Firewall** - For advanced filtering and security
+- **Load Balancer with outbound rules** - Alternative outbound connectivity
+
+Read more about Azure outbound connectivity methods in the [official documentation](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access).
+
+#### Deploying with NAT Gateway
+
+To deploy this demo with a NAT Gateway (zone redundant V2 version) using a static public IP for explicit outbound access, add the `-DeployNatGateway` argument:
 
 ```powershell
 ./deploy.ps1 -GitHubOrganization <github org name> -DeployNatGateway
 ```
 
+**Note:** Using a NAT Gateway incurs an additional cost of approximately $37/month (as of 2025) for the NAT Gateway resource and Public IP, regardless of usage. See the [Cost](#cost) section for more details.
+
 ### Filtering traffic by FQDN via a Firewall
 
-If you are deploying into an existing vnet with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will can whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub.
+If you are deploying into an existing VNET with a default route to a firewall that filters traffic (e.g. Azure Firewall) you will can whitelist [these URL's](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#communication-between-self-hosted-runners-and-github) to allow traffic from the runner to GitHub.
 
-Optionally you kan simplify the outbound NSG-rules to only allow traffic to 'Internet' with an explicit rule and handle the granular filtering based on FQDNs in firewall rules. This is also normally allowed in NSGs as part of the [default security rules](https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview#outbound), unless overridden with deny rules.
+Optionally you can simplify the outbound NSG-rules to only allow traffic to 'Internet' with an explicit rule and handle the granular filtering based on FQDNs in firewall rules. This is also normally allowed in NSGs as part of the [default security rules](https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview#outbound), unless overridden with deny rules.
 
 ### Runner image and installed software
 
 This demo [only supports](https://github.com/matsest/gh-runner-az-private-network-demo/blob/0fe8a739f66d9fd6b6dbfd9b939990740d62aefd/pwsh/github.psm1#L266) Ubuntu images.
 
-Currently Linux x64 and Windows x64 images is [officially supported](https://docs.github.com/en/actions/using-github-hosted-runners/using-larger-runners/about-larger-runners#runner-images) with Azure Private Networking. Images are automatically updated weekly and available software with versions is documented [here](https://github.com/actions/runner-images?tab=readme-ov-file#available-images). Images can be found from the API via the [`Get-GitHubOwnedImage`](https://github.com/matsest/gh-runner-az-private-network-demo/blob/0fe8a739f66d9fd6b6dbfd9b939990740d62aefd/pwsh/github.psm1#L223) function.
+Currently Linux x64 and Windows x64 images are [officially supported](https://docs.github.com/en/actions/using-github-hosted-runners/using-larger-runners/about-larger-runners#runner-images) with Azure Private Networking. Images are automatically updated weekly and available software with versions is documented [here](https://github.com/actions/runner-images?tab=readme-ov-file#available-images). Images can be found from the API via the [`Get-GitHubOwnedImage`](https://github.com/matsest/gh-runner-az-private-network-demo/blob/0fe8a739f66d9fd6b6dbfd9b939990740d62aefd/pwsh/github.psm1#L223) function.
 
-Support for macOS images is on the [roadmap with an uncertain timeline](https://github.com/github/roadmap/issues/982#issuecomment-2523968613), together with support for [custom images](https://github.com/github/roadmap/issues/959).
+Support for macOS images is on the [roadmap but with an uncertain timeline](https://github.com/github/roadmap/issues/982#issuecomment-2523968613), together with support for [custom images](https://github.com/github/roadmap/issues/959).
 
 ### Other options
 
 If you are considering running runners for GitHub Actions in your own Azure private networking, and this scenario does not suit you, you can also consider:
 
 - Running self-hosted runners on [Azure Container App Jobs](https://learn.microsoft.com/en-us/azure/container-apps/tutorial-ci-cd-runners-jobs?tabs=azure-powershell&pivots=container-apps-jobs-self-hosted-ci-cd-github-actions) (simple and cost-effective solution)
-- Running self-hosted runners on [whatever compute and infrastructure you like](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners) (can be a hassle..)
+- Running self-hosted runners on [whatever compute and infrastructure you like](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners) (can be a hassle...)
 
 ### Official documentation
 
