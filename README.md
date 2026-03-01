@@ -186,7 +186,9 @@ Remove-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resourceGroupNa
 
 ### Cost
 
-There will be a minimal Azure-related cost for network traffic depending on your setup and usage, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution, unless using a NAT Gateway with a Public IP (around $37/month).
+There will be a minimal Azure-related cost for network traffic depending on your setup and usage, but the main cost of these runners will be the billing for the runners which is listed [here](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions#per-minute-rates-for-x64-powered-larger-runners). Billing is only counted when workflows are running - there is no idle cost for this solution.
+
+**Additional cost consideration:** If you deploy with the `-DeployNatGateway` option, there will be a fixed monthly cost of approximately $37/month for the NAT Gateway resource and associated Public IP, regardless of usage. See the [Azure Default Outbound Access and NAT Gateway](#azure-default-outbound-access-and-nat-gateway) section for more details.
 
 Note that included GitHub Actions minutes for GitHub Team/Enterprise Cloud does **not** apply to larger runners, so all usage will be billed per-minute according to the rates linked above.
 
@@ -225,15 +227,27 @@ Example values for common subnet sizes (/28 is the smallest useful subnet):
 | /24         | 256          | 251                 | 193                          |
 | /23         | 512          | 507                 | 390                          |
 
-### GitHub Static IP not supported
+### Azure Default Outbound Access and NAT Gateway
 
-A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic you will need to use an Azure Firewall, a NAT Gateway or a Load Balancer. Read more about Azure outbound connectivity methods [here](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) (note that implicit outbound access is retired on March 31st 2026.)
+By default, Azure virtual machines have [default outbound access](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access) (also known as implicit outbound access), which allows VMs to reach the internet without explicit configuration. However, **Azure is retiring default outbound access on March 31, 2026**. After this date, VMs in private subnets will require an explicit outbound connectivity method to access internet resources.
 
-If you want to deploy this demo with a NAT Gateway (zone redundant V2 version) using a static public IP for explicit outbound access you can add the following argument to the deployment:
+A static public IP from GitHub is [not supported](https://docs.github.com/en/enterprise-cloud@latest/admin/configuring-settings/configuring-private-networking-for-hosted-compute-products/about-azure-private-networking-for-github-hosted-runners-in-your-enterprise#about-using-larger-runners-with-azure-vnet) for privately networked runners. To gain a static egress IP for internet-bound traffic, you have several options:
+
+- **NAT Gateway** (recommended for this demo) - Provides a static public IP for outbound traffic
+- **Azure Firewall** - For advanced filtering and security
+- **Load Balancer with outbound rules** - Alternative outbound connectivity
+
+Read more about Azure outbound connectivity methods in the [official documentation](https://learn.microsoft.com/en-us/azure/virtual-network/ip-services/default-outbound-access).
+
+#### Deploying with NAT Gateway
+
+To deploy this demo with a NAT Gateway (zone redundant V2 version) using a static public IP for explicit outbound access, add the `-DeployNatGateway` argument:
 
 ```powershell
 ./deploy.ps1 -GitHubOrganization <github org name> -DeployNatGateway
 ```
+
+**Note:** Using a NAT Gateway incurs an additional cost of approximately $37/month (as of 2025) for the NAT Gateway resource and Public IP, regardless of usage. See the [Cost](#cost) section for more details.
 
 ### Filtering traffic by FQDN via a Firewall
 
