@@ -220,7 +220,7 @@ This will:
 4. The admin creates the runner in the runner group
 5. Use the provided workflow YAML in your repositories
 
-### Example output (manual mode)
+#### Example output (manual mode)
 
 ```powershell
 
@@ -257,7 +257,7 @@ the GitHub setup manually using the values below.
 
 Required values for manual setup:
   - Organization: <org name>
-  - Network Settings ID: /subscriptions/<sub id>/resourceGroups/gh-private-runners/providers/GitHub.Network/networkSettings/<guid>
+  - Network Settings ID: <id>
   - Configuration Name: gh-private-vnet
   - Maximum Runners: 20
   - Runner Image: Ubuntu 24.04
@@ -267,7 +267,7 @@ Steps for GitHub organization admin to complete setup:
   1. Go to: https://github.com/organizations/<org name>/settings/network_configurations
      - Click 'New network configuration'
      - Name: gh-private-vnet
-     - Network settings resource ID: /subscriptions/<sub id>/resourceGroups/gh-private-runners/providers/GitHub.Network/networkSettings/<guid>
+     - Network settings resource ID: <id>
      - Compute service: Actions
      - Click 'Add network configuration'
 
