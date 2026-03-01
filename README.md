@@ -16,7 +16,9 @@ See [this](https://docs.github.com/en/enterprise-cloud@latest/organizations/mana
 ## Prerequisites
 
 - An Azure subscription with **Contributor** and **Network Contributor** permissions (least privilege) or **Owner** permissions
-- A **Team** or **Enterprise Cloud** GitHub organization with **organization Owner role** (required to run operations via GH CLI with Oauth scopes)
+- A **Team** or **Enterprise Cloud** GitHub organization where you either:
+  - Have **organization Owner role** for full automated deployment (required to run operations via GH CLI with Oauth scopes)
+  - Can work with a GitHub admin to complete manual setup using the `-ManualGitHubSetup` option (see [Manual GitHub Setup](#manual-github-setup-without-org-admin-access))
   - Working on identifying if a lesser-privileged approach is supported, either using Oauth scopes, GitHub Apps or fine-grained tokens (awaiting [discussion](https://github.com/orgs/community/discussions/149651#discussioncomment-12373322))
   - If you have a newer GitHub organization/have been migrated to the new billing platform you will need to [edit the default budget](https://docs.github.com/en/billing/using-the-new-billing-platform/preventing-overspending#editing-or-deleting-a-budget) for Actions to more than $0. See [this](#cost) for more details on costs.
 - [GitHub CLI](https://cli.github.com/) (tested with 2.68.1)
@@ -30,7 +32,7 @@ Note that there is limited support for Azure regions with Azure Private Networki
 1. [Authenticate with GitHub CLI](https://cli.github.com/manual/gh_auth_login) by running:
 
 ```powershell
-# Login
+# For full automated deployment (requires admin:org scope):
 gh auth login -s admin:org,write:network_configurations
 
 # If already logged in refresh scopes by running:
@@ -183,6 +185,125 @@ Remove-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resourceGroupNa
 </details>
 
 ## Learn more
+
+### Manual GitHub Setup (without org admin access)
+
+If you don't have GitHub organization admin access, you can still deploy the Azure infrastructure and have an admin complete the GitHub setup manually. This is useful when:
+- You have Azure permissions but lack GitHub org admin access
+- Your organization requires manual review of GitHub configurations
+- You want to separate Azure and GitHub responsibilities
+
+**Prerequisites:**
+- Azure subscription with **Contributor** and **Network Contributor** permissions (least privilege) or **Owner**
+- GitHub CLI authentication (does not require `admin:org` scope)
+- A GitHub organization admin will need to complete steps 1-3 manually
+
+**Deploy with manual mode:**
+
+```powershell
+# For manual GitHub setup mode (any valid token):
+gh auth login
+
+# Deploy only Azure resources
+./deploy.ps1 -GitHubOrganization <github org name> -ManualGitHubSetup
+```
+
+This will:
+- Deploy all Azure resources (resource group, VNET, subnet, NSG, network settings)
+- Skip GitHub API calls that require admin permissions
+- Display manual setup instructions with all required values
+
+**After running with `-ManualGitHubSetup`:**
+1. Share the output with your GitHub organization admin
+2. The admin creates the network configuration using the provided Network Settings ID
+3. The admin creates the runner group linked to the network configuration
+4. The admin creates the runner in the runner group
+5. Use the provided workflow YAML in your repositories
+
+#### Example output (manual mode)
+
+```powershell
+
+--------------------------------------------------------------------------------
+
+🚀 Deploying GitHub-hosted runners with Azure Private Networking
+
+Using GitHub organization '<org name>'
+Using Azure subscription '<sub name>'
+Running in sandbox mode - will deploy everything into a new resource group
+Running in manual GitHub setup mode - Azure resources only
+
+--------------------------------------------------------------------------------
+
+- Registring GitHub.Network resource provider...
+    - Provider already registered
+- Configuring resource group and virtual network...
+- Deploying Azure subnet configuration...
+    - Configured subnet: github-runner
+
+✅ Deployment complete!
+
+Deployment completed in: 0m45s
+
+--------------------------------------------------------------------------------
+
+🔗 Link to Azure resource group:
+https://portal.azure.com/<tenant id>/resource/subscriptions/<sub id>/resourceGroups/gh-private-runners
+
+📋 Manual GitHub Setup Required
+
+Azure resources have been deployed. A GitHub organization admin must complete
+the GitHub setup manually using the values below.
+
+Required values for manual setup:
+  - Organization: <org name>
+  - Network Settings ID: <id>
+  - Configuration Name: gh-private-vnet
+  - Maximum Runners: 20
+  - Runner Image: Ubuntu 24.04
+  - Runner Size: 2-core
+
+Steps for GitHub organization admin to complete setup:
+  1. Go to: https://github.com/organizations/<org name>/settings/network_configurations
+     - Click 'New network configuration'
+     - Name: gh-private-vnet
+     - Network settings resource ID: <id>
+     - Click 'Add Azure Virtual Network'
+
+  2. Go to: https://github.com/organizations/<org name>/settings/actions/runner-groups
+     - Click 'New runner group'
+     - Name: gh-private-vnet
+     - Select the network configuration created in step 1
+     - Visibility: Private (recommended for security)
+     - Click 'Create group'
+
+  3. Go to: https://github.com/organizations/<org name>/settings/actions/runners
+     - Click 'New runner' > 'New GitHub-hosted runner'
+     - Name: gh-private-vnet-ubuntu-24.04
+     - Runner group: gh-private-vnet
+     - Image: Ubuntu 24.04
+     - Size: 2-core
+     - Maximum runners: 20
+     - Click 'Create runner'
+
+💡 After the GitHub admin completes the setup, add the following to a GitHub Actions workflow:
+
+.github/workflows/az-private-networking-demo.yml:
+---
+
+name: az-private-networking-demo
+on: [push]
+jobs:
+  demo:
+    runs-on:
+      group: gh-private-vnet
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show local IP address
+        run: hostname -I
+
+
+```
 
 ### Cost
 
